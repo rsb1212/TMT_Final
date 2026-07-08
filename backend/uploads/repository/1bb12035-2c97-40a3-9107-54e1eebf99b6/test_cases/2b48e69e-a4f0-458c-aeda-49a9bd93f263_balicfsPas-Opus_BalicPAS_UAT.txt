@@ -1,0 +1,5 @@
+\\balicfs\Pas-Opus Balic\PAS UAT
+
+\\10.1.239.100
+
+pgadmin_123
