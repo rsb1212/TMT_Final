@@ -1,6 +1,7 @@
 package com.testmgmt.service;
 
 import com.testmgmt.dto.response.ResponseDTOs.SearchResultResponse;
+import com.testmgmt.repository.CallNumberRepository;
 import com.testmgmt.repository.DefectRepository;
 import com.testmgmt.repository.TestCaseRepository;
 import lombok.RequiredArgsConstructor;
@@ -39,8 +40,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class SearchService {
 
-    private final TestCaseRepository testCaseRepository;
-    private final DefectRepository   defectRepository;
+    private final TestCaseRepository   testCaseRepository;
+    private final DefectRepository     defectRepository;
+    private final CallNumberRepository callNumberRepository;  // Issue #16, #29: Search by call number
 
     /**
      * Two-character prefix → known-empty flag.
@@ -77,6 +79,34 @@ public class SearchService {
                         .status(tc.getStatus().name())
                         .projectName(tc.getProject() != null ? tc.getProject().getName() : "")
                         .moduleName(tc.getModule()  != null ? tc.getModule().getName()   : "")
+                        .build()));
+
+        // Issue #16, #29: Also search by call number code
+        testCaseRepository.findByCallNumberCode(trimmed, projectId, PageRequest.of(0, 10))
+                .forEach(tc -> {
+                    // Avoid duplicates if already found in title/code search
+                    if (results.stream().noneMatch(r -> r.getId().equals(tc.getId()))) {
+                        results.add(SearchResultResponse.builder()
+                                .type("TEST_CASE")
+                                .id(tc.getId())
+                                .code(tc.getCode())
+                                .title(tc.getTitle())
+                                .status(tc.getStatus().name())
+                                .projectName(tc.getProject() != null ? tc.getProject().getName() : "")
+                                .moduleName(tc.getModule()  != null ? tc.getModule().getName()   : "")
+                                .build());
+                    }
+                });
+
+        // Also include call numbers themselves in search results
+        callNumberRepository.searchGlobally(trimmed, PageRequest.of(0, 5))
+                .forEach(cn -> results.add(SearchResultResponse.builder()
+                        .type("CALL_NUMBER")
+                        .id(cn.getId())
+                        .code(cn.getCode())
+                        .title(cn.getName())
+                        .status(cn.getActive() ? "ACTIVE" : "INACTIVE")
+                        .projectName(cn.getProject() != null ? cn.getProject().getName() : "")
                         .build()));
 
         defectRepository.searchByQuery(q, projectId, PageRequest.of(0, 10))

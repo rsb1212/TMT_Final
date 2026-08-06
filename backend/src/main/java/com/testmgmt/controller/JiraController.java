@@ -26,15 +26,19 @@ public class JiraController {
     @Operation(summary = "Create a JIRA issue from a TestMgmt defect")
     public ResponseEntity<ApiResponse<Map<String, String>>> createIssue(
             @PathVariable UUID defectId) {
+        
+        if (!jiraService.isEnabled()) {
+            return ResponseEntity.ok(ApiResponse.error("JIRA integration is disabled"));
+        }
+        
         String issueKey = jiraService.createJiraIssue(defectId);
         if (issueKey != null) {
+            String browseUrl = jiraService.getBrowseUrl(issueKey);
             return ResponseEntity.ok(ApiResponse.success(
                     Map.of("issueKey", issueKey,
-                           "url", "https://yourcompany.atlassian.net/browse/" + issueKey)));
+                           "url", browseUrl != null ? browseUrl : "")));
         }
-        return ResponseEntity.ok(ApiResponse.<Map<String,String>>builder()
-                .success(false).message("JIRA integration disabled or issue creation failed")
-                .build());
+        return ResponseEntity.ok(ApiResponse.error("Failed to create JIRA issue — check logs for details"));
     }
 
     /** Get live JIRA issue details for a defect */
@@ -56,8 +60,7 @@ public class JiraController {
         boolean ok = jiraService.transitionJiraIssue(issueKey, targetStatus);
         return ok
                 ? ResponseEntity.ok(ApiResponse.ok("Transitioned " + issueKey + " → " + targetStatus))
-                : ResponseEntity.ok(ApiResponse.<Void>builder()
-                        .success(false).message("Transition failed — check JIRA config").build());
+                : ResponseEntity.ok(ApiResponse.error("Transition failed — check JIRA config"));
     }
 
     /**

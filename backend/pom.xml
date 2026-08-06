@@ -108,6 +108,14 @@
             <version>${poi.version}</version>
         </dependency>
 
+        <!-- ── iText PDF (PDF generation for test evidence downloads) ─────── -->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itext7-core</artifactId>
+            <version>7.2.5</version>
+            <type>pom</type>
+        </dependency>
+
         <!-- ── Spring Cache + Caffeine (in-process LRU/TTL cache) ─────────── -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -42,7 +42,7 @@ public class TestCaseWorkflowService {
         @CacheEvict(value = "teamProductivity", allEntries = true),
         @CacheEvict(value = "workload",         allEntries = true),
     })
-    public TestCaseResponse forwardToSME(UUID testCaseId, String managerEmail) {
+    public TestCaseResponse forwardToSME(UUID testCaseId, UUID smeId, String managerEmail) {
         TestCase tc = getTestCase(testCaseId);
         // Block only truly terminal or already-queued statuses
         if (List.of(TestStatus.SIGNED_OFF, TestStatus.UAT_PASSED,
@@ -51,6 +51,16 @@ public class TestCaseWorkflowService {
             throw new WorkflowException("Cannot forward case in status " + tc.getStatus() +
                 " — only DRAFT, PASSED, NA, NOT_RELEASED, FAILED, RETEST, or ASSIGNED cases can be forwarded to SME.");
         tc.setStatus(TestStatus.PENDING_SME_REVIEW);
+        // Clear any previous assignment so the case becomes available for reassignment after SME review
+        tc.setAssignedTo(null);
+        
+        // If a specific SME was selected, assign the case to them
+        if (smeId != null) {
+            User sme = userRepository.findById(smeId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", smeId));
+            tc.setAssignedSme(sme);
+        }
+        
         return TestCaseService.toResponse(testCaseRepository.save(tc));
     }
 
@@ -91,6 +101,8 @@ public class TestCaseWorkflowService {
         if (request.getPriority()     != null) tc.setPriority(request.getPriority());
         ReviewAction action = isApprove ? ReviewAction.APPROVED : ReviewAction.MODIFIED;
         saveReview(tc, sme, action, request.getReviewNote());
+        // Clear any previous assignment so the case becomes available for reassignment
+        tc.setAssignedTo(null);
         TestCase saved = testCaseRepository.save(tc);
         if (isApprove && saved.getCreatedBy() != null)
             notificationService.create(saved.getCreatedBy(), NotificationType.SME_APPROVED,
@@ -117,6 +129,8 @@ public class TestCaseWorkflowService {
                 throw new WorkflowException(tc.getCode() + " not in review state.");
             tc.setStatus(TestStatus.SME_APPROVED);
             tc.setReviewedBy(sme);
+            // Clear any previous assignment so the case becomes available for reassignment
+            tc.setAssignedTo(null);
             saveReview(tc, sme, ReviewAction.APPROVED, request.getComment());
             TestCase saved = testCaseRepository.save(tc);
             // Notify the case creator
@@ -144,6 +158,8 @@ public class TestCaseWorkflowService {
             throw new WorkflowException("Case must be in review state.");
         User sme = getUser(smeEmail);
         tc.setStatus(TestStatus.DRAFT);
+        // Clear any previous assignment so the case becomes available for reassignment
+        tc.setAssignedTo(null);
         saveReview(tc, sme, ReviewAction.REJECTED, request.getComment());
         if (tc.getCreatedBy() != null)
             notificationService.create(tc.getCreatedBy(), NotificationType.SME_REJECTED,
@@ -238,6 +254,7 @@ public class TestCaseWorkflowService {
         return TestCaseService.toResponse(testCaseRepository.save(tc));
     }
 
+    
     // ── UAT Workflow ──────────────────────────────────────────
     @Transactional
     @Caching(evict = {

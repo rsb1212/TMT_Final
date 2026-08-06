@@ -6,7 +6,8 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { RefreshCw, ChevronDown, ChevronRight, Download, CheckCircle2,
-  XCircle, Clock, AlertTriangle, BarChart2, Activity, Shield } from 'lucide-react';
+  XCircle, Clock, AlertTriangle, BarChart2, Activity, Shield, Users,
+  Building2, UserCheck, FileText, ArrowRight, Mail, Phone } from 'lucide-react';
 
 const S = {
   Pass:        { color: '#00e676', bg: 'rgba(0,230,118,0.12)'   },
@@ -19,16 +20,21 @@ const S = {
   Draft:       { color: '#8899aa', bg: 'rgba(136,153,170,0.12)' },
 };
 
-function StatTile({ label, value, color, bg, icon: Icon, subtitle }) {
+const DEPARTMENT_COLORS = [
+  '#22d3ee', '#a78bfa', '#f472b6', '#34d399', '#fbbf24',
+  '#fb923c', '#f87171', '#60a5fa', '#c084fc', '#2dd4bf',
+];
+
+function StatTile({ label, value, color, bg, icon: Icon, subtitle, onClick }) {
   return (
-    <div style={{
+    <div onClick={onClick} style={{
       background: bg || 'var(--bg-raised)', border: '1px solid var(--border)',
       borderRadius: 12, padding: '16px 14px', textAlign: 'center',
       borderTop: `3px solid ${color || 'var(--accent)'}`,
       transition: 'transform 0.15s, box-shadow 0.15s',
-      cursor: 'default',
+      cursor: onClick ? 'pointer' : 'default',
     }}
-      onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 6px 20px rgba(0,0,0,0.2)'; }}
+      onMouseEnter={e => { if (onClick) { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 6px 20px rgba(0,0,0,0.2)'; } }}
       onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=''; }}
     >
       {Icon && <Icon size={16} style={{ color, marginBottom: 6, opacity: 0.8 }} />}
@@ -105,6 +111,165 @@ function ProjectTree({ projects, selectedId, onSelect }) {
   );
 }
 
+/* ── SME Department Card ────────────────────────────────── */
+function DepartmentCard({ dept, color, expanded, onToggle }) {
+  const execTotal = dept.passed + dept.failed;
+  const reviewPct = dept.totalCases > 0
+    ? Math.round((dept.pendingReview / dept.totalCases) * 100) : 0;
+  const approvalPct = dept.totalCases > 0
+    ? Math.round((dept.smeApproved / dept.totalCases) * 100) : 0;
+
+  return (
+    <div style={{
+      background: 'var(--bg-card)', border: '1px solid var(--border)',
+      borderRadius: 10, overflow: 'hidden', transition: 'all 0.15s',
+    }}>
+      {/* Header */}
+      <div onClick={onToggle} style={{
+        padding: '14px 16px', cursor: 'pointer', display: 'flex',
+        alignItems: 'center', gap: 12, borderBottom: expanded ? '1px solid var(--border)' : 'none',
+      }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: 8,
+          background: `${color}20`, border: `1px solid ${color}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          <Building2 size={18} style={{ color }} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text1)' }}>{dept.departmentName}</div>
+          <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>
+            {dept.smeUsers?.length || 0} SME user(s) · {dept.totalCases} test cases
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 700, color }}>
+              {dept.totalCases}
+            </div>
+            <div style={{ fontSize: 9, color: 'var(--text3)', textTransform: 'uppercase' }}>Total</div>
+          </div>
+          {expanded ? <ChevronDown size={16} style={{ color: 'var(--text3)' }} />
+                    : <ChevronRight size={16} style={{ color: 'var(--text3)' }} />}
+        </div>
+      </div>
+
+      {/* Expanded details */}
+      {expanded && (
+        <div style={{ padding: '14px 16px' }}>
+          {/* Metrics grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 14 }}>
+            <div style={{
+              padding: '10px', borderRadius: 8, textAlign: 'center',
+              border: '1px solid var(--border)', background: 'var(--bg-raised)',
+            }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: '#d29922' }}>
+                {dept.pendingReview}
+              </div>
+              <div style={{ fontSize: 9, color: 'var(--text3)', textTransform: 'uppercase', marginTop: 3 }}>Pending Review</div>
+            </div>
+            <div style={{
+              padding: '10px', borderRadius: 8, textAlign: 'center',
+              border: '1px solid var(--border)', background: 'var(--bg-raised)',
+            }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: '#bc8cff' }}>
+                {dept.smeApproved}
+              </div>
+              <div style={{ fontSize: 9, color: 'var(--text3)', textTransform: 'uppercase', marginTop: 3 }}>SME Approved</div>
+            </div>
+            <div style={{
+              padding: '10px', borderRadius: 8, textAlign: 'center',
+              border: '1px solid var(--border)', background: 'var(--bg-raised)',
+            }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: '#8899aa' }}>
+                {dept.draftCases}
+              </div>
+              <div style={{ fontSize: 9, color: 'var(--text3)', textTransform: 'uppercase', marginTop: 3 }}>Draft</div>
+            </div>
+            <div style={{
+              padding: '10px', borderRadius: 8, textAlign: 'center',
+              border: '1px solid var(--border)', background: 'var(--bg-raised)',
+            }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: dept.passRate >= 80 ? '#3fb950' : dept.passRate >= 60 ? '#d29922' : '#f85149' }}>
+                {dept.passRate}%
+              </div>
+              <div style={{ fontSize: 9, color: 'var(--text3)', textTransform: 'uppercase', marginTop: 3 }}>Pass Rate</div>
+            </div>
+          </div>
+
+          {/* Progress bars */}
+          <div style={{ marginBottom: 14 }}>
+            <ProgressBar value={reviewPct} color="#d29922" label="Pending Review" />
+            <ProgressBar value={approvalPct} color="#bc8cff" label="SME Approval Rate" />
+          </div>
+
+          {/* SME Users */}
+          {dept.smeUsers?.length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2)',
+                textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+                <Users size={11} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                SME Assignees
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {dept.smeUsers.map(sme => (
+                  <div key={sme.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '8px 10px', borderRadius: 7,
+                    background: 'var(--bg-raised)', border: '1px solid var(--border)',
+                  }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: '50%',
+                      background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: '#8b5cf6',
+                    }}>
+                      {sme.fullName?.charAt(0)?.toUpperCase() || '?'}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text1)' }}>{sme.fullName}</div>
+                      <div style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>{sme.email}</div>
+                    </div>
+                    <a href={`mailto:${sme.email}`} style={{
+                      display: 'flex', padding: 4, borderRadius: 6,
+                      color: 'var(--text3)', cursor: 'pointer',
+                      transition: 'all 0.12s',
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.color = '#8b5cf6'; e.currentTarget.style.background = 'rgba(139,92,246,0.1)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.color = 'var(--text3)'; e.currentTarget.style.background = 'transparent'; }}
+                      title={`Email ${sme.fullName}`}>
+                      <Mail size={13} />
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Additional metrics */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 12,
+          }}>
+            <div style={{ fontSize: 11, color: 'var(--text2)', textAlign: 'center' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#3fb950' }}>{dept.passed}</span>
+              {' '}Passed
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text2)', textAlign: 'center' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#f85149' }}>{dept.failed}</span>
+              {' '}Failed
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text2)', textAlign: 'center' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#00d4ff' }}>{dept.inProgress}</span>
+              {' '}In Progress
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [projects,        setProjects]        = useState([]);
@@ -113,6 +278,9 @@ export default function Dashboard() {
   const [modules,         setModules]         = useState([]);
   const [defects,         setDefects]         = useState([]);
   const [loading,         setLoading]         = useState(false);
+  const [smeData,         setSmeData]         = useState(null);
+  const [expandedDepts,   setExpandedDepts]   = useState({});
+  const [smeView,         setSmeView]         = useState('departments'); // 'departments' | 'summary'
 
   const isSME     = user?.role === 'SME';
   const isManager = ['MANAGER', 'ADMIN'].includes(user?.role);
@@ -124,7 +292,6 @@ export default function Dashboard() {
       const all = r.data.data || [];
       setProjects(all);
       if (all.length > 0) {
-        // Auto-select first sub-project if available, otherwise first root project
         const first = all[0].subProjects?.length > 0 ? all[0].subProjects[0] : all[0];
         setSelectedProject(first.id);
       }
@@ -142,20 +309,29 @@ export default function Dashboard() {
       defectApi.list(selectedProject),
     ];
 
+    // If SME, also load department-wise dashboard
+    if (isSME) {
+      calls.push(reportApi.smeDashboard(selectedProject));
+    }
+
     Promise.all(calls)
-      .then(([dr, mr, dfr]) => {
+      .then(([dr, mr, dfr, sme]) => {
         setDashboard(dr.data.data);
         setModules(mr.data.data || []);
         setDefects(dfr.data.data || []);
+        if (isSME && sme) {
+          setSmeData(sme.data.data);
+        }
       })
       .catch(err => {
         console.error(err);
         setDashboard(null);
         setModules([]);
         setDefects([]);
+        setSmeData(null);
       })
       .finally(() => setLoading(false));
-  }, [selectedProject]);
+  }, [selectedProject, isSME]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -178,7 +354,6 @@ export default function Dashboard() {
   const executionPct    = d && d.totalTestCases > 0
     ? Math.round((totalExecuted / d.totalTestCases) * 100) : 0;
   const passPct         = d?.passRate ?? 0;
-  // DSA: useMemo — defect stats and chart data only recompute when data changes
   const { openDefects, criticalDefects, pieData, barData } = useMemo(() => {
     const openDefects     = defects.filter(df => ['NEW','OPEN','IN_PROGRESS'].includes(df.status)).length;
     const criticalDefects = defects.filter(df => df.severity === 'CRITICAL').length;
@@ -203,10 +378,58 @@ export default function Dashboard() {
     return { openDefects, criticalDefects, pieData, barData };
   }, [defects, modules, d]);
 
-  // ── SME-specific dashboard title/subtitle ────────────────────
+  // ── SME department chart data ───────────────────────────────
+  const deptPieData = useMemo(() => {
+    if (!smeData?.departmentSummaries) return [];
+    return smeData.departmentSummaries.map((dept, i) => ({
+      name: dept.departmentName,
+      value: dept.totalCases,
+      color: DEPARTMENT_COLORS[i % DEPARTMENT_COLORS.length],
+    }));
+  }, [smeData]);
+
+  const deptBarData = useMemo(() => {
+    if (!smeData?.departmentSummaries) return [];
+    return smeData.departmentSummaries.map(dept => ({
+      name: dept.departmentName.length > 12 ? dept.departmentName.slice(0, 10) + '…' : dept.departmentName,
+      'Pending Review': dept.pendingReview,
+      'SME Approved': dept.smeApproved,
+      'Draft': dept.draftCases,
+      'In Progress': dept.inProgress,
+    }));
+  }, [smeData]);
+
+  const toggleDept = (name) => {
+    setExpandedDepts(prev => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  // Get all SME users across departments
+  const allSmeUsers = useMemo(() => {
+    if (!smeData?.departmentSummaries) return [];
+    const users = [];
+    const seen = new Set();
+    smeData.departmentSummaries.forEach(dept => {
+      dept.smeUsers?.forEach(sme => {
+        if (!seen.has(sme.id)) {
+          seen.add(sme.id);
+          users.push({ ...sme, department: dept.departmentName });
+        }
+      });
+    });
+    return users;
+  }, [smeData]);
+
+  // ── Page titles ─────────────────────────────────────────────
   const pageTitle    = isSME ? 'SME Review Dashboard' : isManager ? 'Manager Dashboard' : 'Project Status';
-  const pageSubtitle = isSME ? 'Project review metrics and test case quality overview' :
-                       isTester ? 'Your project execution status' : 'Real-time project test metrics';
+  const pageSubtitle = isSME
+    ? 'Department-wise test case bifurcation and review metrics'
+    : isTester ? 'Your project execution status' : 'Real-time project test metrics';
+
+  // ── SME Tab buttons ─────────────────────────────────────────
+  const tabs = isSME ? [
+    { key: 'departments', label: 'Departments', icon: Building2 },
+    { key: 'summary',     label: 'Summary',     icon: BarChart2 },
+  ] : [];
 
   return (
     <div style={{ display: 'flex', gap: 20 }}>
@@ -232,7 +455,7 @@ export default function Dashboard() {
           <div>
             <h1 className="page-title">{pageTitle}</h1>
             <p className="page-subtitle">
-              {d ? `📁 ${d.projectName}` : pageSubtitle}
+              {smeData ? `📁 ${smeData.projectName}` : d ? `📁 ${d.projectName}` : pageSubtitle}
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -251,7 +474,7 @@ export default function Dashboard() {
 
         {loading && <div className="loading">Loading dashboard…</div>}
 
-        {!loading && !d && (
+        {!loading && !d && !smeData && (
           <div className="empty-state">
             <div className="empty-icon">📊</div>
             <div className="empty-text">Select a project to view the dashboard</div>
@@ -259,34 +482,273 @@ export default function Dashboard() {
           </div>
         )}
 
-        {!loading && d && (
+        {/* ── SME Department Dashboard ───────────────────────────────── */}
+        {!loading && isSME && smeData && (
           <>
-            {/* ── SME Banner ─────────────────────────────────────── */}
-            {isSME && (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                background: 'rgba(34,211,238,0.07)', border: '1px solid rgba(34,211,238,0.2)',
-                borderRadius: 10, padding: '12px 16px', marginBottom: 20,
-              }}>
-                <Shield size={18} style={{ color: '#22d3ee', flexShrink: 0 }} />
+            {/* SME Header Banner */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              background: 'rgba(139,92,246,0.07)', border: '1px solid rgba(139,92,246,0.2)',
+              borderRadius: 10, padding: '12px 16px', marginBottom: 20,
+            }}>
+              <Shield size={18} style={{ color: '#8b5cf6', flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text1)' }}>
+                  Department-Wise Test Case Bifurcation
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text3)' }}>
+                  {smeData.departmentSummaries.length} departments · {smeData.totalAllCases} total cases · {smeData.totalPendingReview} pending review · {smeData.totalSmeApproved} approved
+                </div>
+              </div>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, textAlign: 'center' }}>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text1)' }}>
-                    SME Reviewer View
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text3)' }}>
-                    Showing quality metrics and test coverage for review purposes
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#8b5cf6',
+                    fontFamily: 'var(--font-mono)' }}>{smeData.totalSmeApproved}</div>
+                  <div style={{ fontSize: 9, color: 'var(--text3)', textTransform: 'uppercase' }}>
+                    Approved
                   </div>
                 </div>
-                <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#22d3ee',
-                    fontFamily: 'var(--font-mono)' }}>{d.smeApproved}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase' }}>
-                    SME Approved
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#d29922',
+                    fontFamily: 'var(--font-mono)' }}>{smeData.totalPendingReview}</div>
+                  <div style={{ fontSize: 9, color: 'var(--text3)', textTransform: 'uppercase' }}>
+                    Pending
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* SME Tabs */}
+            {tabs.length > 0 && (
+              <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: 16 }}>
+                {tabs.map(tab => {
+                  const Icon = tab.icon;
+                  return (
+                    <button key={tab.key} onClick={() => setSmeView(tab.key)} style={{
+                      background: 'none', border: 'none',
+                      borderBottom: smeView === tab.key ? '2px solid #8b5cf6' : '2px solid transparent',
+                      color: smeView === tab.key ? '#8b5cf6' : 'var(--text-3)',
+                      padding: '10px 20px', cursor: 'pointer', fontSize: 14, fontWeight: 600,
+                      fontFamily: 'var(--font-sans)', transition: 'all 0.15s', marginBottom: -1,
+                      display: 'flex', alignItems: 'center', gap: 6,
+                    }}>
+                      <Icon size={14} />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
             )}
 
+            {/* ── Departments View ──────────────────────────── */}
+            {smeView === 'departments' && (
+              <>
+                {/* Summary stat cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
+                  <StatTile label="Total Departments" value={smeData.departmentSummaries.length} color="#8b5cf6" icon={Building2} />
+                  <StatTile label="Total Cases"       value={smeData.totalAllCases}          color="var(--accent)" icon={FileText} />
+                  <StatTile label="Pending Review"    value={smeData.totalPendingReview}     color="#d29922"       icon={Clock} />
+                  <StatTile label="SME Approved"      value={smeData.totalSmeApproved}       color="#bc8cff"       icon={CheckCircle2} />
+                </div>
+
+                {/* Department cards grid */}
+                {smeData.departmentSummaries.length === 0 ? (
+                  <div className="empty-state">
+                    <div className="empty-icon">📋</div>
+                    <div className="empty-text">No department data found</div>
+                    <div className="empty-sub">Teams/departments will appear once test cases are created by users with a team assigned</div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {smeData.departmentSummaries.map((dept, i) => (
+                      <DepartmentCard
+                        key={dept.departmentName}
+                        dept={dept}
+                        color={DEPARTMENT_COLORS[i % DEPARTMENT_COLORS.length]}
+                        expanded={!!expandedDepts[dept.departmentName]}
+                        onToggle={() => toggleDept(dept.departmentName)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── Summary View ──────────────────────────────── */}
+            {smeView === 'summary' && (
+              <>
+                {/* Pie chart — Department distribution */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                  <div className="card">
+                    <div className="card-header">
+                      <span className="card-title">Department Distribution</span>
+                      <span style={{ fontSize: 11, color: 'var(--text3)' }}>
+                        {smeData.departmentSummaries.length} departments
+                      </span>
+                    </div>
+                    {deptPieData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={250}>
+                        <PieChart>
+                          <Pie data={deptPieData} cx="50%" cy="50%"
+                            innerRadius={55} outerRadius={90} paddingAngle={2} dataKey="value">
+                            {deptPieData.map((e, i) => <Cell key={e.name || i} fill={e.color} />)}
+                          </Pie>
+                          <Tooltip contentStyle={{ background: 'var(--bg-raised)',
+                            border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
+                            formatter={(v, n) => [`${v} TCs`, n]} />
+                          <Legend wrapperStyle={{ fontSize: 11 }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="empty-state" style={{ padding: 30 }}>
+                        <div className="empty-text">No data</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bar chart — Department review status */}
+                  <div className="card">
+                    <div className="card-header">
+                      <span className="card-title">Review Status by Department</span>
+                    </div>
+                    {deptBarData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={deptBarData} layout="vertical"
+                          margin={{ top: 0, right: 20, bottom: 0, left: 0 }}>
+                          <XAxis type="number" tick={{ fill: 'var(--text3)', fontSize: 10 }} />
+                          <YAxis type="category" dataKey="name" width={100}
+                            tick={{ fill: 'var(--text2)', fontSize: 10 }} />
+                          <Tooltip contentStyle={{ background: 'var(--bg-raised)',
+                            border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
+                          <Bar dataKey="Pending Review" stackId="a" fill="#d29922" />
+                          <Bar dataKey="SME Approved"   stackId="a" fill="#bc8cff" />
+                          <Bar dataKey="Draft"          stackId="a" fill="#8899aa" />
+                          <Bar dataKey="In Progress"    stackId="a" fill="#00d4ff" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="empty-state" style={{ padding: 30 }}>
+                        <div className="empty-text">No data</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Department detail table */}
+                <div className="card" style={{ marginBottom: 20 }}>
+                  <div className="card-header">
+                    <span className="card-title">Department Detail</span>
+                    <span style={{ fontSize: 11, color: 'var(--text3)' }}>
+                      {smeData.departmentSummaries.length} departments
+                    </span>
+                  </div>
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Department</th>
+                          <th style={{ color: 'var(--accent)' }}>Total</th>
+                          <th style={{ color: '#d29922' }}>Pending Review</th>
+                          <th style={{ color: '#bc8cff' }}>SME Approved</th>
+                          <th style={{ color: '#8899aa' }}>Draft</th>
+                          <th style={{ color: '#00d4ff' }}>In Progress</th>
+                          <th style={{ color: '#3fb950' }}>Passed</th>
+                          <th style={{ color: '#f85149' }}>Failed</th>
+                          <th>Pass Rate</th>
+                          <th>SME Users</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {smeData.departmentSummaries.map(dept => (
+                          <tr key={dept.departmentName}>
+                            <td style={{ fontWeight: 600 }}>{dept.departmentName}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)', fontWeight: 700 }}>{dept.totalCases}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', color: '#d29922' }}>{dept.pendingReview}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', color: '#bc8cff' }}>{dept.smeApproved}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', color: '#8899aa' }}>{dept.draftCases}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', color: '#00d4ff' }}>{dept.inProgress}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', color: '#3fb950' }}>{dept.passed}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', color: '#f85149' }}>{dept.failed}</td>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ flex: 1, height: 6, background: 'var(--bg-deep)',
+                                  borderRadius: 3, overflow: 'hidden', minWidth: 50 }}>
+                                  <div style={{ height: '100%', borderRadius: 3,
+                                    width: `${dept.passRate}%`,
+                                    background: dept.passRate >= 80 ? '#3fb950'
+                                      : dept.passRate >= 60 ? '#d29922' : '#f85149' }} />
+                                </div>
+                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
+                                  color: dept.passRate >= 80 ? '#3fb950'
+                                    : dept.passRate >= 60 ? '#d29922' : '#f85149' }}>
+                                  {dept.passRate}%
+                                </span>
+                              </div>
+                            </td>
+                            <td style={{ fontSize: 11, color: 'var(--text2)' }}>
+                              {dept.smeUsers?.length > 0
+                                ? dept.smeUsers.map(u => u.fullName).join(', ')
+                                : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* SME Users list */}
+                {allSmeUsers.length > 0 && (
+                  <div className="card" style={{ marginBottom: 20 }}>
+                    <div className="card-header">
+                      <span className="card-title">All SME Reviewers</span>
+                      <span style={{ fontSize: 11, color: 'var(--text3)' }}>
+                        {allSmeUsers.length} users across {smeData.departmentSummaries.length} departments
+                      </span>
+                    </div>
+                    <div style={{ padding: '12px 16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
+                      {allSmeUsers.map(sme => (
+                        <div key={sme.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '8px 12px', borderRadius: 7,
+                          background: 'var(--bg-raised)', border: '1px solid var(--border)',
+                        }}>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: '50%',
+                            background: 'rgba(139,92,246,0.12)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700, color: '#8b5cf6',
+                          }}>
+                            {sme.fullName?.charAt(0)?.toUpperCase() || '?'}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text1)' }}>{sme.fullName}</div>
+                            <div style={{ fontSize: 10, color: 'var(--text3)' }}>
+                              {sme.email} · <span style={{ color: '#8b5cf6' }}>{sme.department}</span>
+                            </div>
+                          </div>
+                          <a href={`mailto:${sme.email}`} style={{
+                            display: 'flex', padding: 4, borderRadius: 6,
+                            color: 'var(--text3)', cursor: 'pointer',
+                            transition: 'all 0.12s',
+                          }}
+                            onMouseEnter={e => { e.currentTarget.style.color = '#8b5cf6'; e.currentTarget.style.background = 'rgba(139,92,246,0.1)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text3)'; e.currentTarget.style.background = 'transparent'; }}>
+                            <Mail size={12} />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
+
+        {/* ── Manager / Tester Dashboard (non-SME) ─────────────────── */}
+        {!loading && !isSME && d && (
+          <>
             {/* ── Row 1: Key stats ──────────────────────────────── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)',
               gap: 10, marginBottom: 12 }}>
@@ -335,7 +797,7 @@ export default function Dashboard() {
                 color="#ff9800" label="Defect Rate" />
             </div>
 
-            {/* ── Defects summary (visible to all roles) ─────────── */}
+            {/* ── Defects summary ───────────────────────────────── */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr',
               gap: 16, marginBottom: 20 }}>
               <div className="card">

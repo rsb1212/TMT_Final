@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { testCaseApi, projectApi } from '../api';
+import { testCaseApi, projectApi, executionApi, attachmentApi } from '../api';
 import { useAuth } from '../hooks/useAuth';
-import { CheckCheck, UserCheck, MessageSquare, RotateCcw } from 'lucide-react';
+import { CheckCheck, UserCheck, MessageSquare, RotateCcw, Eye, Download, FileText, X } from 'lucide-react';
 
 export default function WorkflowPage() {
   const { user } = useAuth();
@@ -25,6 +25,38 @@ export default function WorkflowPage() {
 
   // Sign-off
   const [signOffNote, setSignOffNote] = useState('');
+
+  // Evidence viewer
+  const [evidenceModal, setEvidenceModal] = useState(null);
+  const [evidenceData, setEvidenceData] = useState([]);
+  const [evidenceLoading, setEvidenceLoading] = useState(false);
+
+  const loadEvidence = async (testCaseId) => {
+    setEvidenceLoading(true);
+    try {
+      const historyRes = await executionApi.history(testCaseId);
+      const executions = historyRes.data?.data?.executions || [];
+      
+      const evidencePromises = executions.map(async (exec) => {
+        try {
+          const attRes = await attachmentApi.listForExecution(exec.id);
+          const attachments = attRes.data?.data || [];
+          return { ...exec, attachments };
+        } catch {
+          return { ...exec, attachments: [] };
+        }
+      });
+      
+      const execsWithAttachments = await Promise.all(evidencePromises);
+      const hasEvidence = execsWithAttachments.some(e => e.attachments.length > 0);
+      setEvidenceData(hasEvidence ? execsWithAttachments : []);
+    } catch (err) {
+      console.error('Failed to load evidence:', err);
+      setEvidenceData([]);
+    } finally {
+      setEvidenceLoading(false);
+    }
+  };
 
   useEffect(() => {
     projectApi.list().then(r => {
@@ -55,6 +87,13 @@ export default function WorkflowPage() {
     setTimeout(() => setAlert(null), 5000);
   };
 
+  const loadApprovedCases = () => {
+    if (!selectedProject) return;
+    testCaseApi.list({ projectId: selectedProject, status: 'SME_APPROVED', size: 100 })
+      .then(r => setApprovedCases(r.data.data?.content || []))
+      .catch(() => {});
+  };
+
   const handleBulkApprove = async () => {
     if (selected.length === 0) return;
     try {
@@ -62,6 +101,7 @@ export default function WorkflowPage() {
       showAlert('success', `${selected.length} case(s) approved`);
       setSelected([]);
       setSmeQueue(q => q.filter(tc => !selected.includes(tc.id)));
+      loadApprovedCases();
     } catch (err) {
       showAlert('error', err.response?.data?.message || 'Bulk approve failed');
     }
@@ -222,6 +262,7 @@ export default function WorkflowPage() {
                                 await testCaseApi.bulkApprove({ testCaseIds:[tc.id], comment:'Approved' });
                                 showAlert('success', `${tc.code} approved`);
                                 setSmeQueue(q => q.filter(x => x.id !== tc.id));
+                                loadApprovedCases();
                               } catch(e) { showAlert('error', 'Approve failed'); }
                             }}>
                             <CheckCheck size={13} /> Approve
@@ -229,6 +270,10 @@ export default function WorkflowPage() {
                           <button className="btn btn-danger btn-sm"
                             onClick={() => { setReviewModal(tc); setReviewNote(''); }}>
                             <RotateCcw size={13} /> Changes
+                          </button>
+                          <button className="btn btn-secondary btn-sm"
+                            onClick={() => { setEvidenceModal(tc); loadEvidence(tc.id); }}>
+                            <Eye size={13} /> View Evidence
                           </button>
                         </div>
                       </td>
@@ -340,6 +385,98 @@ export default function WorkflowPage() {
                 <RotateCcw size={14} /> Request Changes
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Evidence Viewer Modal */}
+      {evidenceModal && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setEvidenceModal(null)}>
+          <div className="modal" style={{ maxWidth: 700, maxHeight: '80vh', overflow: 'auto' }}>
+            <div className="modal-header">
+              <span className="modal-title">Execution Evidence</span>
+              <button className="modal-close" onClick={() => setEvidenceModal(null)}>×</button>
+            </div>
+            <p style={{ color:'var(--text-2)', fontSize:13, marginBottom:16 }}>
+              Case <strong style={{ color:'var(--accent)' }}>{evidenceModal.code}</strong>: {evidenceModal.title}
+            </p>
+            
+            {evidenceLoading ? (
+              <div className="loading">Loading evidence data…</div>
+            ) : evidenceData.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">📄</div>
+                <div className="empty-text">No execution evidence found</div>
+                <div className="empty-sub">This test case has no evidence attachments from executions</div>
+              </div>
+            ) : (
+              <div>
+                {evidenceData.map(exec => (
+                  <div key={exec.id} className="card" style={{ marginBottom: 12 }}>
+                    <div className="card-header">
+                      <span className="card-title">Run #{exec.runNumber} — {exec.result}</span>
+                      <span style={{ fontSize:11, color:'var(--text-3)' }}>
+                        {new Date(exec.executedAt).toLocaleDateString()} by {exec.executedByName}
+                      </span>
+                    </div>
+                    {exec.attachments.length > 0 ? (
+                      <div style={{ padding: '8px 12px' }}>
+                        {exec.attachments.map(att => (
+                          <div key={att.id} style={{
+                            display:'flex', alignItems:'center', justifyContent:'space-between',
+                            padding:'6px 8px', marginBottom:4,
+                            background:'var(--bg-deep)', borderRadius:6,
+                            border:'1px solid var(--border)'
+                          }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                              <FileText size={14} style={{ color:'var(--accent)', flexShrink:0 }} />
+                              <span style={{ fontSize:12, color:'var(--text-2)' }}>{att.fileName}</span>
+                              <span style={{ fontSize:10, color:'var(--text-3)' }}>
+                                ({(att.fileSizeBytes / 1024).toFixed(1)} KB)
+                              </span>
+                            </div>
+                            <div style={{ display:'flex', gap:6 }}>
+                              <button className="btn btn-secondary btn-sm" title="Download"
+                                onClick={async () => {
+                                  try {
+                                    const res = await attachmentApi.download(att.id);
+                                    const url = window.URL.createObjectURL(new Blob([res.data]));
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = att.fileName;
+                                    a.click();
+                                    window.URL.revokeObjectURL(url);
+                                  } catch(e) {
+                                    showAlert('error', 'Download failed');
+                                  }
+                                }}>
+                                <Download size={12} /> Download
+                              </button>
+                              <button className="btn btn-secondary btn-sm" title="View"
+                                onClick={async () => {
+                                  try {
+                                    const res = await attachmentApi.downloadAsPdf(att.id);
+                                    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+                                    window.open(url, '_blank');
+                                  } catch(e) {
+                                    showAlert('error', 'View failed');
+                                  }
+                                }}>
+                                <Eye size={12} /> View
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ padding:12, fontSize:12, color:'var(--text-3)' }}>
+                        No attachments for this run
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

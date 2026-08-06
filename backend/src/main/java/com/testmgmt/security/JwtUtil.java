@@ -28,7 +28,32 @@ public class JwtUtil {
     private long expiration;
 
     public String generateToken(UserDetails userDetails) {
-        return createToken(new HashMap<>(), userDetails.getUsername());
+        Map<String, Object> claims = new HashMap<>();
+        // Extract role from authorities
+        String role = userDetails.getAuthorities().stream()
+                .findFirst()
+                .map(auth -> auth.getAuthority().replace("ROLE_", ""))
+                .orElse(null);
+        if (role != null) {
+            claims.put("role", role);
+        }
+        return createToken(claims, userDetails.getUsername());
+    }
+
+    public String generateToken(UserDetails userDetails, String tenantId) {
+        Map<String, Object> claims = new HashMap<>();
+        if (tenantId != null) {
+            claims.put("tenantId", tenantId);
+        }
+        // Extract role from authorities
+        String role = userDetails.getAuthorities().stream()
+                .findFirst()
+                .map(auth -> auth.getAuthority().replace("ROLE_", ""))
+                .orElse(null);
+        if (role != null) {
+            claims.put("role", role);
+        }
+        return createToken(claims, userDetails.getUsername());
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
@@ -52,6 +77,28 @@ public class JwtUtil {
 
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    public String extractTenantId(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            return claims.get("tenantId", String.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Extract user role from JWT token.
+     * Used to check if user is ADMIN for multi-tenant access.
+     */
+    public String extractRole(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            return claims.get("role", String.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {

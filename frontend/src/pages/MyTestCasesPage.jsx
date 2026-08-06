@@ -14,7 +14,7 @@ import { useAuth } from '../hooks/useAuth';
 import {
   ClipboardList, Search, X, Bug, CheckCircle2, XCircle,
   Clock, RefreshCw, Play, RotateCcw, AlertCircle,
-  ChevronDown, ChevronUp, Send, Loader, Eye, LogOut
+  ChevronDown, ChevronUp, Send, Loader, Eye, LogOut, UserCheck
 } from 'lucide-react';
 
 /* ── Colour maps ────────────────────────────────────────────── */
@@ -75,10 +75,20 @@ function ExecuteModal({ tc, onClose, onDone }) {
   const [actualResult,setActualResult]= useState('');
   const [defectRef,   setDefectRef]   = useState('');
   const [notes,       setNotes]       = useState('');
+  const [environment, setEnvironment] = useState('SIT');
   const [saving,      setSaving]      = useState(false);
   const [error,       setError]       = useState('');
 
-  const RESULT_OPTIONS = [
+const ENVIRONMENTS = [
+  { value: 'SIT',         label: 'SIT',          desc: 'System Integration Testing' },
+  { value: 'DEV',         label: 'DEV',          desc: 'Development Environment' },
+  { value: 'UAT',         label: 'UAT',          desc: 'User Acceptance Testing' },
+  { value: 'STAGING',     label: 'Staging',      desc: 'Pre-production Staging' },
+  { value: 'PRODUCTION',  label: 'Production',   desc: 'Live Production' },
+  { value: 'REGRESSION',  label: 'Regression',   desc: 'Regression Testing' },
+];
+
+const RESULT_OPTIONS = [
     { value: 'PASSED',        label: '✅ Passed',        color: '#3fb950', desc: 'Test case executed successfully' },
     { value: 'FAILED',        label: '❌ Failed',        color: '#f85149', desc: 'Test case did not meet expected result' },
     { value: 'RETEST',        label: '🔄 Retest',       color: '#d29922', desc: 'Needs to be re-executed after fix' },
@@ -96,6 +106,7 @@ function ExecuteModal({ tc, onClose, onDone }) {
       await executionApi.submit({
         testCaseId:   tc.id,
         result,
+        environment,
         actualResult: actualResult.trim() || null,
         defectRef:    defectRef.trim()    || null,
         notes:        notes.trim()        || null,
@@ -129,6 +140,29 @@ function ExecuteModal({ tc, onClose, onDone }) {
               {error}
             </div>
           )}
+
+          {/* Environment selection */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2)', textTransform: 'uppercase',
+              letterSpacing: '0.5px', display: 'block', marginBottom: 10 }}>
+              Environment *
+            </label>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {ENVIRONMENTS.map(env => (
+                <div key={env.value} onClick={() => setEnvironment(env.value)} style={{
+                  padding: '8px 14px', borderRadius: 8, cursor: 'pointer',
+                  border: `1px solid ${environment === env.value ? 'var(--accent)' : 'var(--border)'}`,
+                  background: environment === env.value ? 'rgba(88,166,255,0.12)' : 'var(--bg-raised)',
+                  transition: 'all 0.12s',
+                }}>
+                  <div style={{ fontWeight: 700, fontSize: 12, color: environment === env.value ? 'var(--accent)' : 'var(--text1)' }}>
+                    {env.label}
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 1 }}>{env.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Result selection */}
           <div style={{ marginBottom: 16 }}>
@@ -227,6 +261,133 @@ function StepViewer({ steps }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ── SME Selection Modal ──────────────────────────────────── */
+function SMESelectionModal({ tc, onClose, onDone }) {
+  const [smes, setSmes] = useState([]);
+  const [selectedSmeId, setSelectedSmeId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchSmes = async () => {
+      try {
+        const res = await userApi.listByRole('SME');
+        setSmes(res.data.data || []);
+      } catch {
+        setError('Failed to load SME users');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSmes();
+  }, []);
+
+  const handleSubmit = async () => {
+    if (!selectedSmeId) { setError('Please select an SME'); return; }
+    setSubmitting(true);
+    setError('');
+    try {
+      await testCaseApi.forwardToSME(tc.id, selectedSmeId);
+      onDone(tc.id);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not send to SME');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{ maxWidth: 480 }}>
+        <div className="modal-header">
+          <div>
+            <div className="modal-title">Select SME Reviewer</div>
+            <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
+              {tc.code} · {tc.title?.substring(0, 50)}{tc.title?.length > 50 ? '…' : ''}
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', display: 'flex' }}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <div style={{ padding: '18px 20px' }}>
+          {error && (
+            <div style={{ padding: '8px 12px', background: 'rgba(248,81,73,0.1)', border: '1px solid rgba(248,81,73,0.3)',
+              borderRadius: 7, fontSize: 12, color: '#f85149', marginBottom: 14 }}>
+              {error}
+            </div>
+          )}
+
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 20, color: 'var(--text3)' }}>
+              <Loader size={20} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 8px', display: 'block' }} />
+              Loading SMEs…
+            </div>
+          ) : smes.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 20, color: 'var(--text3)' }}>
+              <UserCheck size={32} style={{ margin: '0 auto 8px', display: 'block', opacity: 0.4 }} />
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', marginBottom: 4 }}>No SMEs Available</div>
+              <div style={{ fontSize: 12 }}>There are no active SME users to assign for review.</div>
+            </div>
+          ) : (
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2)', textTransform: 'uppercase',
+                letterSpacing: '0.5px', display: 'block', marginBottom: 10 }}>
+                Choose an SME Reviewer *
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {smes.map(sme => (
+                  <div key={sme.id}
+                    onClick={() => setSelectedSmeId(sme.id)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '10px 14px', borderRadius: 8, cursor: 'pointer',
+                      border: `1px solid ${selectedSmeId === sme.id ? '#8b5cf6' : 'var(--border)'}`,
+                      background: selectedSmeId === sme.id ? 'rgba(139,92,246,0.1)' : 'var(--bg-raised)',
+                      transition: 'all 0.12s',
+                    }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: '50%',
+                      background: selectedSmeId === sme.id ? '#8b5cf6' : 'var(--border)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700,
+                      color: selectedSmeId === sme.id ? '#fff' : 'var(--text3)',
+                    }}>
+                      {sme.fullName?.charAt(0)?.toUpperCase() || '?'}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text1)' }}>{sme.fullName}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)' }}>{sme.email}</div>
+                    </div>
+                    {sme.team && (
+                      <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 600,
+                        background: 'rgba(139,92,246,0.1)', color: '#8b5cf6',
+                        padding: '2px 8px', borderRadius: 4 }}>
+                        {sme.team}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button className="btn btn-secondary" onClick={onClose} disabled={submitting}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSubmit}
+            disabled={submitting || !selectedSmeId || loading}
+            style={{ background: '#8b5cf6', borderColor: '#8b5cf6' }}>
+            {submitting ? <><Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> Sending…</> : <><Send size={14} /> Send to SME</>}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -456,6 +617,7 @@ export default function MyTestCasesPage() {
   const [filterPri,   setFilterPri]   = useState('');
   const [executeTC,   setExecuteTC]   = useState(null);
   const [releaseTC,   setReleaseTC]   = useState(null);
+  const [forwardTC,   setForwardTC]   = useState(null);
   const [actionMsg,   setActionMsg]   = useState(null);
   const [starting,    setStarting]    = useState(null);
 
@@ -479,19 +641,20 @@ export default function MyTestCasesPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Forward DRAFT or PASSED case to SME review queue
-  const handleForwardSME = async (id) => {
-    try {
-      await testCaseApi.forwardToSME(id);
-      setTestCases(prev =>
-        prev.map(t => t.id === id ? { ...t, status: 'PENDING_SME_REVIEW' } : t)
-      );
-      setActionMsg({ type: 'success', text: '✅ Test case sent to SME review queue' });
-    } catch (err) {
-      setActionMsg({ type: 'error', text: err.response?.data?.message || 'Could not send to SME' });
-    } finally {
-      setTimeout(() => setActionMsg(null), 4000);
-    }
+  // Forward DRAFT or PASSED case to SME review queue — opens modal first
+  const handleForwardSME = (id) => {
+    const tc = testCases.find(t => t.id === id);
+    if (tc) setForwardTC(tc);
+  };
+
+  // Called after SME is selected in modal
+  const handleForwardSMEDone = (id) => {
+    setTestCases(prev =>
+      prev.map(t => t.id === id ? { ...t, status: 'PENDING_SME_REVIEW' } : t)
+    );
+    setForwardTC(null);
+    setActionMsg({ type: 'success', text: '✅ Test case sent to SME review queue' });
+    setTimeout(() => setActionMsg(null), 4000);
   };
 
   // Release request submitted — update status locally and show confirmation
@@ -785,6 +948,15 @@ export default function MyTestCasesPage() {
           tc={releaseTC}
           onClose={() => setReleaseTC(null)}
           onDone={handleReleaseDone}
+        />
+      )}
+
+      {/* ── SME Selection Modal ── */}
+      {forwardTC && (
+        <SMESelectionModal
+          tc={forwardTC}
+          onClose={() => setForwardTC(null)}
+          onDone={handleForwardSMEDone}
         />
       )}
     </div>

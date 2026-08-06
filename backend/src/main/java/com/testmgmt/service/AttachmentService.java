@@ -10,6 +10,7 @@ import com.testmgmt.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class AttachmentService {
 
     private final AttachmentRepository attachmentRepository;
     private final UserRepository       userRepository;
+    private final PdfConversionService pdfConversionService;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
@@ -79,6 +81,43 @@ public class AttachmentService {
         Resource resource = new UrlResource(path.toUri());
         if (!resource.exists()) throw new ResourceNotFoundException("File", att.getFilePath());
         return resource;
+    }
+
+    /**
+     * Download attachment as PDF - converts any file format to PDF.
+     * Used for test execution evidence downloads.
+     */
+    @Transactional(readOnly = true)
+    public ByteArrayResource downloadAsPdf(UUID attachmentId) throws IOException {
+        Attachment att = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment", attachmentId));
+        
+        Path path = Paths.get(att.getFilePath());
+        if (!Files.exists(path)) {
+            throw new ResourceNotFoundException("File", att.getFilePath());
+        }
+
+        byte[] pdfBytes = pdfConversionService.convertToPdf(path, att.getFileName());
+        return new ByteArrayResource(pdfBytes);
+    }
+
+    /**
+     * Get the PDF filename for an attachment (replaces extension with .pdf)
+     */
+    public String getPdfFileName(UUID attachmentId) {
+        Attachment att = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment", attachmentId));
+        
+        String originalName = att.getFileName();
+        if (originalName.toLowerCase().endsWith(".pdf")) {
+            return originalName;
+        }
+        
+        int lastDot = originalName.lastIndexOf('.');
+        if (lastDot > 0) {
+            return originalName.substring(0, lastDot) + ".pdf";
+        }
+        return originalName + ".pdf";
     }
 
     @Transactional

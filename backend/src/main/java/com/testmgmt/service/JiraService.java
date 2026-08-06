@@ -42,6 +42,28 @@ public class JiraService {
     @Value("${jira.project-key:}")       private String  projectKey;
     @Value("${jira.issue-type:Bug}")     private String  issueType;
 
+    // ── Utility methods ──────────────────────────────────────────────────────
+
+    /**
+     * Get the browse URL for a JIRA issue.
+     * @param issueKey The JIRA issue key (e.g., "PROJ-123")
+     * @return Full URL to browse the issue in JIRA
+     */
+    public String getBrowseUrl(String issueKey) {
+        if (baseUrl == null || baseUrl.isBlank()) {
+            return null;
+        }
+        String cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        return cleanBaseUrl + "/browse/" + issueKey;
+    }
+
+    /**
+     * Check if JIRA integration is enabled.
+     */
+    public boolean isEnabled() {
+        return jiraEnabled;
+    }
+
     // ── Create JIRA issue from a TestMgmt defect ─────────────────────────────
 
     @Transactional

@@ -59,12 +59,22 @@ public class UserController {
     // ── List all users ────────────────────────────────────────────────────────
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'SME')")
     @Operation(summary = "List all users (optionally filter active-only)")
     public ResponseEntity<ApiResponse<List<UserResponse>>> listAll(
             @RequestParam(defaultValue = "false") boolean activeOnly) {
         return ResponseEntity.ok(ApiResponse.success(
                 userManagementService.listAll(activeOnly)));
+    }
+
+    // ── List by role (used by SME selection modal and other dropdowns) ────────
+
+    @GetMapping("/by-role")
+    @Operation(summary = "List active users by role — e.g. SME, TESTER")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> listByRole(
+            @RequestParam UserRole role) {
+        return ResponseEntity.ok(ApiResponse.success(
+                userManagementService.listByRole(role)));
     }
 
     // ── List all active testers (used by assignment dropdowns) ────────────────

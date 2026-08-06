@@ -222,3 +222,6 @@ Tests use H2 in-memory database (profile `test`). Integration tests cover:
 | `APP_JWT_EXPIRATION` | `86400000` | Token TTL (ms) — 24h |
 | `JIRA_BASE_URL` | `https://your-domain.atlassian.net` | Jira integration URL |
 | `JIRA_API_TOKEN` | — | Jira API token |
+
+
+<!-- /visualizearing -->

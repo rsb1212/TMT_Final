@@ -2,11 +2,13 @@ package com.testmgmt.service;
 
 import com.testmgmt.dto.request.AuthDTOs.*;
 import com.testmgmt.dto.response.ResponseDTOs.*;
+import com.testmgmt.entity.Tenant;
 import com.testmgmt.entity.User;
 import com.testmgmt.enums.UserRole;
 import com.testmgmt.exception.BadRequestException;
 import com.testmgmt.exception.ConflictException;
 import com.testmgmt.exception.ResourceNotFoundException;
+import com.testmgmt.repository.TenantRepository;
 import com.testmgmt.repository.UserRepository;
 import com.testmgmt.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
@@ -38,12 +41,34 @@ public class AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", request.getEmail()));
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
-        String token = jwtUtil.generateToken(userDetails);
+        
+        // Generate token with tenant ID if user has one
+        String tenantId = user.getTenantId() != null ? user.getTenantId().toString() : null;
+        String token = jwtUtil.generateToken(userDetails, tenantId);
+        
+        // Load tenant info if available
+        TenantResponse tenantResponse = null;
+        if (user.getTenantId() != null) {
+            tenantRepository.findById(user.getTenantId()).ifPresent(tenant -> {
+                // Build tenant response inside
+            });
+            Tenant tenant = tenantRepository.findById(user.getTenantId()).orElse(null);
+            if (tenant != null) {
+                tenantResponse = TenantResponse.builder()
+                        .id(tenant.getId())
+                        .code(tenant.getCode())
+                        .name(tenant.getName())
+                        .description(tenant.getDescription())
+                        .active(tenant.getActive())
+                        .build();
+            }
+        }
 
         return AuthResponse.builder()
                 .token(token)
                 .tokenType("Bearer")
                 .user(toUserResponse(user))
+                .tenant(tenantResponse)
                 .build();
     }
 

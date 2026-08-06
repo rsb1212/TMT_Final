@@ -220,10 +220,12 @@ function EvidencePanel({ executionId, canDelete }) {
               </div>
               <button
                 onClick={() => {
-                  attachmentApi.download(f.id).then(res => {
-                    const url = window.URL.createObjectURL(new Blob([res.data]));
+                  // Download as PDF - all test evidence is converted to PDF format
+                  attachmentApi.downloadAsPdf(f.id).then(res => {
+                    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
                     const a = document.createElement('a');
-                    a.href = url; a.download = f.fileName || 'evidence';
+                    const pdfName = f.fileName?.replace(/\.[^.]+$/, '.pdf') || 'evidence.pdf';
+                    a.href = url; a.download = pdfName;
                     a.click(); window.URL.revokeObjectURL(url);
                   });
                 }}
@@ -234,7 +236,7 @@ function EvidencePanel({ executionId, canDelete }) {
                   border: 'none', cursor: 'pointer', fontWeight: 600,
                 }}
               >
-                <Download size={12} /> Download
+                <Download size={12} /> Download PDF
               </button>
               {canDelete && (
                 <button onClick={() => del(f.id)} style={{
@@ -726,10 +728,12 @@ function HistoryCard({ ex }) {
                       </div>
                       <button
                         onClick={() => {
-                          attachmentApi.download(f.id).then(res => {
-                            const url = window.URL.createObjectURL(new Blob([res.data]));
+                          // Download as PDF - all test evidence is converted to PDF format
+                          attachmentApi.downloadAsPdf(f.id).then(res => {
+                            const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
                             const a = document.createElement('a');
-                            a.href = url; a.download = f.fileName || 'evidence';
+                            const pdfName = f.fileName?.replace(/\.[^.]+$/, '.pdf') || 'evidence.pdf';
+                            a.href = url; a.download = pdfName;
                             a.click(); window.URL.revokeObjectURL(url);
                           });
                         }}
@@ -739,7 +743,7 @@ function HistoryCard({ ex }) {
                           background: 'rgba(0,212,255,0.1)', color: 'var(--accent)',
                           border: 'none', cursor: 'pointer', fontWeight: 600,
                         }}>
-                        <Download size={12} /> Download
+                        <Download size={12} /> Download PDF
                       </button>
                     </div>
                   ))}
@@ -1252,7 +1256,9 @@ export default function ExecutionPage() {
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 3 }}>
-                      {tc.project?.name} · {tc.module?.name || 'No module'} · {tc.priority} · {tc.status}
+                      {tc.project?.name} · {tc.module?.name || 'No module'} 
+                      {tc.callNumber?.code && <> · <span style={{ color: 'var(--purple)' }}>{tc.callNumber.code}</span></>}
+                      {' '}· {tc.priority} · {tc.status}
                     </div>
                   </button>
                 ))}

@@ -234,6 +234,16 @@ function DetailModal({ tc, onClose }) {
             { label: 'Priority',    value: <PriorityDot priority={tc.priority} /> },
             { label: 'Project',     value: tc.project?.name || '—' },
             { label: 'Module',      value: tc.module?.name  || '—' },
+            { label: 'Call Number', value: tc.callNumber?.code 
+                ? <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--purple)', fontWeight: 600 }}>
+                    {tc.callNumber.code}
+                    {tc.callNumber.jiraKey && (
+                      <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--text3)' }}>
+                        (JIRA: {tc.callNumber.jiraKey})
+                      </span>
+                    )}
+                  </span> 
+                : '—' },
             { label: 'Assigned To', value: tc.assignedTo?.fullName || '—' },
             { label: 'Reviewed By', value: tc.reviewedBy?.fullName || '—' },
             { label: 'Created By',  value: tc.createdBy?.fullName  || '—' },
@@ -714,6 +724,7 @@ export default function TestCasesPage() {
                   <th>Test Case Discription</th>
                   <th>Project</th>
                   <th>Module</th>
+                  <th>Call Number</th>
                   <th>Priority</th>
                   <th>Status</th>
                   <th>Assigned To</th>
@@ -741,6 +752,9 @@ export default function TestCasesPage() {
                     </td>
                     <td style={{ fontSize: 12, color: 'var(--text3)' }}>
                       {tc.module?.name || '—'}
+                    </td>
+                    <td style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--purple)' }}>
+                      {tc.callNumber?.code || '—'}
                     </td>
                     <td><PriorityDot priority={tc.priority} /></td>
                     <td><StatusBadge status={tc.status} /></td>

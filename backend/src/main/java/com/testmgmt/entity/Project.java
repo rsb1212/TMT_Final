@@ -5,15 +5,20 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "projects",
         indexes = {
             @Index(name = "idx_projects_owner",  columnList = "owner_id"),
-            @Index(name = "idx_projects_parent", columnList = "parent_project_id")
+            @Index(name = "idx_projects_parent", columnList = "parent_project_id"),
+            @Index(name = "idx_projects_tenant", columnList = "tenant_id")
         })
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Project extends BaseEntity {
+
+    @Column(name = "tenant_id")
+    private UUID tenantId;
 
     @Column(name = "name", nullable = false, length = 150)
     private String name;

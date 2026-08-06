@@ -1,0 +1,4 @@
+[Service]
+Environment="JWT_SECRET=mySecretKey123456789012345678901234567890"
+Environment="DATASOURCE_URL=jdbc:postgresql://localhost:5566/tmt_uat"
+Environment="DATASOURCE_USER=postgres"

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "test_cases",
@@ -16,10 +17,15 @@ import java.util.Set;
                 @Index(name = "idx_tc_project",    columnList = "project_id"),
                 @Index(name = "idx_tc_priority",   columnList = "priority"),
                 @Index(name = "idx_tc_status",     columnList = "status"),
-                @Index(name = "idx_tc_assignedto", columnList = "assigned_to_id")
+                @Index(name = "idx_tc_assignedto", columnList = "assigned_to_id"),
+                @Index(name = "idx_tc_call_number", columnList = "call_number_id"),
+                @Index(name = "idx_tc_tenant", columnList = "tenant_id")
         })
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class TestCase extends BaseEntity {
+
+    @Column(name = "tenant_id")
+    private UUID tenantId;
 
     @Column(name = "code", unique = true, nullable = false, length = 20)
     private String code;
@@ -41,6 +47,11 @@ public class TestCase extends BaseEntity {
     @JoinColumn(name = "module_id")
     private Module module;
 
+    /** Call number this test case belongs to */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "call_number_id")
+    private CallNumber callNumber;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "priority", nullable = false, length = 20)
     private Priority priority;
@@ -57,6 +68,11 @@ public class TestCase extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewed_by_id")
     private User reviewedBy;
+
+    /** The SME this case was forwarded to for review */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_sme_id")
+    private User assignedSme;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to_id")

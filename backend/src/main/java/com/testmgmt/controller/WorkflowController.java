@@ -78,8 +78,10 @@ public class WorkflowController {
     @PatchMapping("/{id}/forward-sme")
     @PreAuthorize("hasAnyRole('TESTER','MANAGER','ADMIN')")
     public ResponseEntity<ApiResponse<TestCaseResponse>> forwardToSME(
-            @PathVariable UUID id, @AuthenticationPrincipal UserDetails u) {
-        return ResponseEntity.ok(ApiResponse.success(workflowService.forwardToSME(id, u.getUsername())));
+            @PathVariable UUID id,
+            @RequestParam(required = false) UUID smeId,
+            @AuthenticationPrincipal UserDetails u) {
+        return ResponseEntity.ok(ApiResponse.success(workflowService.forwardToSME(id, smeId, u.getUsername())));
     }
 
     /* ── Assign ──────────────────────────────────────── */

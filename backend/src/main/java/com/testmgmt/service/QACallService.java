@@ -25,11 +25,11 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({"null"})
+@SuppressWarnings({"null", "unused"})
 public class QACallService {
 
     private final QACallRepository          callRepository;
-    private final CallAttachmentRepository  attachmentRepository;
+    private final CallAttachmentRepository  attachmentRepository; // Reserved for future attachment support
     private final ProjectRepository         projectRepository;
     private final ModuleRepository          moduleRepository;
     private final UserRepository            userRepository;

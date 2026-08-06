@@ -6,15 +6,22 @@ import com.testmgmt.enums.DefectStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "defects",
         indexes = {
                 @Index(name = "idx_def_project", columnList = "project_id"),
                 @Index(name = "idx_def_status", columnList = "status"),
-                @Index(name = "idx_def_severity", columnList = "severity")
+                @Index(name = "idx_def_severity", columnList = "severity"),
+                @Index(name = "idx_def_call_number", columnList = "call_number_id"),
+                @Index(name = "idx_def_tenant", columnList = "tenant_id")
         })
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Defect extends BaseEntity {
+
+    @Column(name = "tenant_id")
+    private UUID tenantId;
 
     @Column(name = "code", unique = true, nullable = false, length = 20)
     private String code;
@@ -32,6 +39,11 @@ public class Defect extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_case_id")
     private TestCase testCase;
+
+    /** Issue #22: Call number this defect belongs to */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "call_number_id")
+    private CallNumber callNumber;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "severity", nullable = false, length = 20)

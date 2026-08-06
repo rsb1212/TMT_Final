@@ -1,1 +1,0 @@
-<!-- Go through the project and make it server ready my server is a linux server, and its ip is 10.3.41.102, and the files are stored in /var/www/html/TestManagementSystem/ in the server -->

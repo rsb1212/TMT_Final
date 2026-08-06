@@ -4,14 +4,20 @@ import com.testmgmt.enums.RequirementType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "requirements",
        indexes = {
            @Index(name = "idx_req_project", columnList = "project_id"),
-           @Index(name = "idx_req_code",    columnList = "code")
+           @Index(name = "idx_req_code",    columnList = "code"),
+           @Index(name = "idx_req_tenant", columnList = "tenant_id")
        })
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Requirement extends BaseEntity {
+
+    @Column(name = "tenant_id")
+    private UUID tenantId;
 
     @Column(name = "code", unique = true, nullable = false, length = 30)
     private String code;

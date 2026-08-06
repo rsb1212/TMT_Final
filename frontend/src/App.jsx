@@ -19,6 +19,8 @@ import UATWorkflowPage        from './pages/UATWorkflowPage';
 import WorkloadDashboardPage  from './pages/WorkloadDashboardPage';
 import RepositoryPage         from './pages/RepositoryPage';
 import ReleaseInboxPage       from './pages/ReleaseInboxPage';
+import TenantsPage            from './pages/TenantsPage';
+import SmeDashboardPage       from './pages/SmeDashboardPage';
 import Layout                 from './components/Layout';
 
 function ProtectedRoute({ children, roles }) {
@@ -55,6 +57,9 @@ export default function App() {
             <Route path="uat-workflow" element={
               <ProtectedRoute roles={['MANAGER','SME','ADMIN']}><UATWorkflowPage /></ProtectedRoute>
             }/>
+            <Route path="sme-dashboard" element={
+              <ProtectedRoute roles={['SME','MANAGER','ADMIN']}><SmeDashboardPage /></ProtectedRoute>
+            }/>
             <Route path="assign-by-module" element={
               <ProtectedRoute roles={['MANAGER','ADMIN']}><AssignByModulePage /></ProtectedRoute>
             }/>
@@ -87,6 +92,11 @@ export default function App() {
             {/* ── Release Inbox (Manager) ── */}
             <Route path="release-inbox" element={
               <ProtectedRoute roles={['MANAGER','ADMIN']}><ReleaseInboxPage /></ProtectedRoute>
+            }/>
+
+            {/* ── Tenant Management (Admin only) ── */}
+            <Route path="tenants" element={
+              <ProtectedRoute roles={['ADMIN']}><TenantsPage /></ProtectedRoute>
             }/>
           </Route>
         </Routes>

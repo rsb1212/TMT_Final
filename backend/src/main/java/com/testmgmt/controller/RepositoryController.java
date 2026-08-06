@@ -70,10 +70,10 @@ public class RepositoryController {
                 .body(resource);
     }
 
-    /** Archive (soft-delete) a document */
+    /** Archive (soft-delete) a document — MANAGER/ADMIN only */
     @PatchMapping("/documents/{docId}/archive")
-    @PreAuthorize("hasAnyRole('TESTER','MANAGER','ADMIN','SME')")
-    @Operation(summary = "Archive a repository document (soft delete)")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
+    @Operation(summary = "Archive a repository document (soft delete) — MANAGER/ADMIN only")
     public ResponseEntity<ApiResponse<Void>> archive(
             @PathVariable UUID docId,
             @AuthenticationPrincipal UserDetails user) {

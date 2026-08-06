@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { defectApi, projectApi } from '../api';
+import { defectApi, projectApi, jiraApi } from '../api';
 import { useAuth } from '../hooks/useAuth';
-import { Plus, AlertTriangle, RefreshCw, X, Bug, ExternalLink } from 'lucide-react';
+import { Plus, AlertTriangle, RefreshCw, X, Bug, ExternalLink, Send } from 'lucide-react';
 
 const SEVERITIES    = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
 const PRIORITIES    = ['P1', 'P2', 'P3', 'P4'];
@@ -132,6 +132,25 @@ export default function DefectsPage() {
     }
   };
 
+  // Push defect to JIRA
+  const handlePushToJira = async (defectId) => {
+    try {
+      const r = await jiraApi.createIssue(defectId);
+      if (r.data.success) {
+        const { issueKey, url } = r.data.data;
+        showMsg('success', `JIRA issue ${issueKey} created successfully`);
+        // Update local state with the new JIRA key
+        setDefects(ds => ds.map(d => 
+          d.id === defectId ? { ...d, jiraIssueKey: issueKey, jiraUrl: url } : d
+        ));
+      } else {
+        showMsg('error', r.data.message || 'Failed to create JIRA issue');
+      }
+    } catch (err) {
+      showMsg('error', err.response?.data?.message || 'Failed to push to JIRA');
+    }
+  };
+
   // Derived stats
   const total    = defects.length;
   const open     = defects.filter(d => ['NEW', 'OPEN', 'IN_PROGRESS'].includes(d.status)).length;
@@ -157,7 +176,7 @@ export default function DefectsPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-          <select value={selectedProject}
+          <select id="defects-project" name="defects-project" value={selectedProject}
             onChange={e => { setSelectedProject(e.target.value); setForm(f => ({ ...f, projectId: e.target.value })); }}
             style={{ width: 200 }}>
             <option value="">Select project…</option>
@@ -211,11 +230,11 @@ export default function DefectsPage() {
 
       {/* ── Filters ───────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-        <select value={filterSev} onChange={e => setFilterSev(e.target.value)} style={{ width: 160 }}>
+        <select id="filter-severity" name="filter-severity" value={filterSev} onChange={e => setFilterSev(e.target.value)} style={{ width: 160 }}>
           <option value="">All Severities</option>
           {SEVERITIES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ width: 160 }}>
+        <select id="filter-status" name="filter-status" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ width: 160 }}>
           <option value="">All Statuses</option>
           {DEF_STATUSES.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
         </select>
@@ -261,6 +280,7 @@ export default function DefectsPage() {
                 <th>Project</th>
                 <th>Raised By</th>
                 <th>Created Date</th>
+                <th>JIRA</th>
                 {canUpdateStatus && <th>Update Status</th>}
               </tr>
             </thead>
@@ -273,12 +293,6 @@ export default function DefectsPage() {
                       color: 'var(--accent)', fontWeight: 700 }}>
                       {d.code}
                     </span>
-                    {d.jiraIssueKey && (
-                      <div style={{ fontSize: 10, color: '#00d4ff', marginTop: 2,
-                        display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <ExternalLink size={9} />{d.jiraIssueKey}
-                      </div>
-                    )}
                   </td>
 
                   {/* Title */}
@@ -343,10 +357,35 @@ export default function DefectsPage() {
                     </div>
                   </td>
 
+                  {/* JIRA Integration */}
+                  <td style={{ textAlign: 'center' }}>
+                    {d.jiraIssueKey ? (
+                      <a href={d.jiraUrl || `#`} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 11, color: '#00d4ff', textDecoration: 'none',
+                          display: 'inline-flex', alignItems: 'center', gap: 3,
+                          padding: '3px 8px', background: 'rgba(0,212,255,0.1)',
+                          borderRadius: 4, fontFamily: 'var(--font-mono)' }}>
+                        <ExternalLink size={10} />{d.jiraIssueKey}
+                      </a>
+                    ) : canUpdateStatus ? (
+                      <button onClick={() => handlePushToJira(d.id)}
+                        title="Push to JIRA"
+                        style={{ padding: '4px 10px', fontSize: 10, fontWeight: 600,
+                          background: 'linear-gradient(135deg, #0052CC 0%, #2684FF 100%)',
+                          color: '#fff', border: 'none', borderRadius: 4,
+                          cursor: 'pointer', display: 'inline-flex',
+                          alignItems: 'center', gap: 4 }}>
+                        <Send size={10} /> Push to JIRA
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: 11, color: 'var(--text3)' }}>—</span>
+                    )}
+                  </td>
+
                   {/* Update Status */}
                   {canUpdateStatus && (
                     <td>
-                      <select value={d.status}
+                      <select id={`defect-status-${d.id}`} name={`defect-status-${d.id}`} value={d.status}
                         onChange={e => handleStatusChange(d.id, e.target.value)}
                         style={{ width: 130, padding: '4px 8px', fontSize: 11 }}>
                         {DEF_STATUSES.map(s => (
@@ -379,8 +418,8 @@ export default function DefectsPage() {
 
             <form onSubmit={handleCreate}>
               <div className="form-group">
-                <label>Project *</label>
-                <select value={form.projectId}
+                <label htmlFor="defect-form-project">Project *</label>
+                <select id="defect-form-project" name="defect-form-project" value={form.projectId}
                   onChange={e => setForm(f => ({ ...f, projectId: e.target.value }))} required>
                   <option value="">Select project…</option>
                   {projects.map(p => (
@@ -392,30 +431,30 @@ export default function DefectsPage() {
               </div>
 
               <div className="form-group">
-                <label>Title *</label>
-                <input value={form.title}
+                <label htmlFor="defect-form-title">Title *</label>
+                <input id="defect-form-title" name="defect-form-title" value={form.title}
                   onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                   placeholder="Short, clear defect description" required autoFocus />
               </div>
 
               <div className="form-group">
-                <label>Description</label>
-                <textarea rows={3} value={form.description}
+                <label htmlFor="defect-form-description">Description</label>
+                <textarea id="defect-form-description" name="defect-form-description" rows={3} value={form.description}
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                   placeholder="Steps to reproduce, actual vs expected behaviour…" />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div className="form-group">
-                  <label>Severity *</label>
-                  <select value={form.severity}
+                  <label htmlFor="defect-form-severity">Severity *</label>
+                  <select id="defect-form-severity" name="defect-form-severity" value={form.severity}
                     onChange={e => setForm(f => ({ ...f, severity: e.target.value }))}>
                     {SEVERITIES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Priority *</label>
-                  <select value={form.priority}
+                  <label htmlFor="defect-form-priority">Priority *</label>
+                  <select id="defect-form-priority" name="defect-form-priority" value={form.priority}
                     onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}>
                     {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
@@ -423,8 +462,8 @@ export default function DefectsPage() {
               </div>
 
               <div className="form-group">
-                <label>Test Case ID (optional)</label>
-                <input value={form.testCaseId}
+                <label htmlFor="defect-form-testcase">Test Case ID (optional)</label>
+                <input id="defect-form-testcase" name="defect-form-testcase" value={form.testCaseId}
                   onChange={e => setForm(f => ({ ...f, testCaseId: e.target.value }))}
                   placeholder="Linked test case UUID" />
               </div>

@@ -22,6 +22,11 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // Seed default users
+        seedUsers();
+    }
+    
+    private void seedUsers() {
         if (!userRepository.existsByEmail("admin@testmgmt.io")) {
             User admin = User.builder()
                     .username("admin")

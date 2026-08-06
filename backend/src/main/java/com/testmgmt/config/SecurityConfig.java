@@ -111,6 +111,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST,  "/api/v1/users").hasAnyRole("MANAGER","ADMIN")
                 .requestMatchers(HttpMethod.GET,   "/api/v1/users/me").authenticated()
                 .requestMatchers(HttpMethod.GET,   "/api/v1/users/testers").authenticated()
+                .requestMatchers(HttpMethod.GET,   "/api/v1/users/by-role").authenticated()
                 .requestMatchers(HttpMethod.GET,   "/api/v1/users/**").hasAnyRole("MANAGER","ADMIN")
                 .requestMatchers(HttpMethod.PUT,   "/api/v1/users/**").hasAnyRole("MANAGER","ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/users/**").hasAnyRole("MANAGER","ADMIN")

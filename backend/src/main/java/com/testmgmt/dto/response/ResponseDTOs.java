@@ -33,6 +33,21 @@ public class ResponseDTOs {
         private String token;
         private String tokenType;
         private UserResponse user;
+        private TenantResponse tenant;
+    }
+
+    // ── Tenant ───────────────────────────────────────────────────────────────
+
+    @Data @Builder
+    public static class TenantResponse {
+        private UUID     id;
+        private String   code;
+        private String   name;
+        private String   description;
+        private Boolean  active;
+        private String   settings;
+        private Instant  createdAt;
+        private Instant  updatedAt;
     }
 
     // ── User ─────────────────────────────────────────────────────────────────
@@ -81,6 +96,54 @@ public class ResponseDTOs {
         private UUID   projectId;
     }
 
+    // ── Call Number ──────────────────────────────────────────────────────────
+
+    @Data @Builder
+    public static class CallNumberResponse {
+        private UUID                    id;
+        private String                  code;
+        private String                  name;
+        private String                  description;
+        private UUID                    projectId;
+        private String                  projectName;
+        private UUID                    parentCallNumberId;
+        private String                  parentCallNumberCode;
+        private String                  externalReference;
+        private String                  jiraKey;
+        private Boolean                 active;
+        private Integer                 sortOrder;
+        private String                  fullPath;
+        private Boolean                 isParent;
+        private List<CallNumberResponse> children;
+        private Long                    testCaseCount;
+        private Instant                 createdAt;
+        private Instant                 updatedAt;
+    }
+
+    @Data @Builder
+    public static class CallNumberTreeResponse {
+        private UUID                    projectId;
+        private String                  projectName;
+        private List<CallNumberResponse> callNumbers;
+        private Long                    totalCallNumbers;
+        private Long                    totalTestCasesMapped;
+    }
+
+    @Data @Builder
+    public static class BulkStatusUpdateResponse {
+        private int                      successCount;
+        private int                      failureCount;
+        private List<String>             successCodes;
+        private List<BulkUpdateError>    errors;
+    }
+
+    @Data @Builder
+    public static class BulkUpdateError {
+        private UUID   testCaseId;
+        private String testCaseCode;
+        private String errorMessage;
+    }
+
     // ── Requirements ─────────────────────────────────────────────────────────
 
     @Data @Builder
@@ -120,6 +183,7 @@ public class ResponseDTOs {
         private Boolean          isTemplate;
         private ProjectResponse  project;
         private ModuleResponse   module;
+        private CallNumberResponse callNumber;
         private UserResponse     createdBy;
         private UserResponse     reviewedBy;
         private UserResponse     assignedTo;
@@ -255,6 +319,77 @@ public class ResponseDTOs {
         private long   defectRaised;
         private long   releaseRequested;
         private double passRate;
+    }
+
+    // ── SME Dashboard ─────────────────────────────────────────
+
+    @Data @Builder
+    public static class SMEDepartmentSummary {
+        private String             departmentName;
+        private long               totalCases;
+        private long               pendingReview;
+        private long               smeApproved;
+        private long               draftCases;
+        private long               changesRequested;
+        private long               inProgress;
+        private long               passed;
+        private long               failed;
+        private double             passRate;
+        private List<UserResponse> smeUsers;
+    }
+
+    @Data @Builder
+    public static class SMEDashboardResponse {
+        private UUID                        projectId;
+        private String                      projectName;
+        private List<SMEDepartmentSummary>   departmentSummaries;
+        private long                        totalAllCases;
+        private long                        totalPendingReview;
+        private long                        totalSmeApproved;
+        private long                        totalDraft;
+    }
+
+    // ── SME Module Dashboard (from Chenges.md requirements) ──────────────────
+
+    @Data @Builder
+    public static class SmeModuleDashboardResponse {
+        private UUID                  smeId;
+        private String                smeName;
+        private int                   totalAssignedModules;
+        private List<SmeModuleStats>  moduleStats;
+        private int                   totalTestCases;
+        private int                   totalPendingReview;
+        private int                   totalPendingSignOff;
+        private int                   totalReviewed;
+        private int                   totalSignedOff;
+        private double                overallCompletionPercentage;
+    }
+
+    @Data @Builder
+    public static class SmeModuleStats {
+        private UUID   moduleId;
+        private String moduleName;
+        private String channel;
+        private String department;
+        private int    totalTestCases;
+        private int    pendingReview;
+        private int    pendingSignOff;
+        private int    reviewed;
+        private int    signedOff;
+        private double completionPercentage;
+    }
+
+    @Data @Builder
+    public static class SmeModuleAssignmentResponse {
+        private UUID    id;
+        private UUID    smeId;
+        private String  smeName;
+        private UUID    moduleId;
+        private String  moduleName;
+        private String  channel;
+        private String  department;
+        private Boolean active;
+        private Instant createdAt;
     }
 
     // ── Import ───────────────────────────────────────────────────────────────

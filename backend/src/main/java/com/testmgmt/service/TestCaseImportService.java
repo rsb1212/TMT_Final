@@ -3,6 +3,7 @@ package com.testmgmt.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.testmgmt.dto.response.ResponseDTOs.ImportErrorItem;
 import com.testmgmt.dto.response.ResponseDTOs.ImportResultResponse;
+import com.testmgmt.entity.CallNumber;
 import com.testmgmt.entity.ExcelImportLog;
 import com.testmgmt.entity.Module;
 import com.testmgmt.entity.Project;
@@ -12,6 +13,7 @@ import com.testmgmt.enums.Priority;
 import com.testmgmt.enums.TestStatus;
 import com.testmgmt.exception.BadRequestException;
 import com.testmgmt.exception.ResourceNotFoundException;
+import com.testmgmt.repository.CallNumberRepository;
 import com.testmgmt.repository.ExcelImportLogRepository;
 import com.testmgmt.repository.ModuleRepository;
 import com.testmgmt.repository.ProjectRepository;
@@ -66,6 +68,8 @@ public class TestCaseImportService {
     private static final int COL_TC_ID       = 6;
     private static final int COL_TC_DESC     = 7;
     private static final int COL_EXPECTED    = 8;
+    private static final int COL_PRIORITY    = 9;   // Issue #7: Add Priority column
+    private static final int COL_CALL_NUMBER = 10;  // Issue #18: Call number column
     private static final int COL_STATUS      = 14;
 
     private final TestCaseRepository       testCaseRepository;
@@ -74,6 +78,7 @@ public class TestCaseImportService {
     private final ModuleRepository         moduleRepository;
     private final ExcelImportLogRepository importLogRepository;
     private final UserRepository           userRepository;
+    private final CallNumberRepository     callNumberRepository;  // Added for call number support
     private final ObjectMapper             objectMapper;
 
     // ── Import ────────────────────────────────────────────────────────────────
@@ -160,6 +165,8 @@ public class TestCaseImportService {
         String tcId        = getCellStr(row, COL_TC_ID);
         String tcDesc      = getCellStr(row, COL_TC_DESC);
         String expectedResult = getCellStr(row, COL_EXPECTED);
+        String priorityStr = getCellStr(row, COL_PRIORITY);     // Issue #7: Read priority from Excel
+        String callNumberCode = getCellStr(row, COL_CALL_NUMBER); // Issue #18: Read call number from Excel
         String statusStr   = getCellStr(row, COL_STATUS);
         String scenario    = getCellStr(row, COL_SCENARIO);
 
@@ -173,6 +180,12 @@ public class TestCaseImportService {
 
         // Map Excel status string → TestStatus enum
         TestStatus status = mapExcelStatus(statusStr);
+        
+        // Issue #7: Map priority from Excel, default to MEDIUM if not provided
+        Priority priority = mapExcelPriority(priorityStr);
+        
+        // Issue #18: Resolve call number from Excel
+        CallNumber callNumber = resolveCallNumber(project, callNumberCode);
 
         // Check for existing TC: in-memory map first, then DB
         TestCase tc = code != null ? codeToCase.get(code) : null;
@@ -196,7 +209,8 @@ public class TestCaseImportService {
                     .preconditions(!scenario.isBlank() ? scenario : null)
                     .project(project)
                     .module(module)
-                    .priority(Priority.MEDIUM)
+                    .callNumber(callNumber)    // Issue #18: Set call number
+                    .priority(priority)        // Issue #7: Set priority from Excel
                     .status(status)
                     .createdBy(importer)
                     .build();
@@ -216,7 +230,7 @@ public class TestCaseImportService {
             if (code != null && !code.isBlank()) codeToCase.put(code, tc);
             return 1;
         } else {
-            // Update existing TC: refresh status and module from latest Excel row
+            // Update existing TC: refresh status, module, priority, and call number from latest Excel row
             boolean changed = false;
             if (status != TestStatus.DRAFT) {
                 tc.setStatus(status);
@@ -224,6 +238,14 @@ public class TestCaseImportService {
             }
             if (module != null && tc.getModule() == null) {
                 tc.setModule(module);
+                changed = true;
+            }
+            if (callNumber != null && tc.getCallNumber() == null) {
+                tc.setCallNumber(callNumber);
+                changed = true;
+            }
+            if (priority != Priority.MEDIUM && tc.getPriority() == Priority.MEDIUM) {
+                tc.setPriority(priority);
                 changed = true;
             }
             if (changed) testCaseRepository.save(tc);
@@ -483,6 +505,34 @@ public class TestCaseImportService {
             case "cr", "duplicate"                    -> TestStatus.DEPRECATED;
             default                                   -> TestStatus.DRAFT;
         };
+    }
+
+    /** Issue #7: Map Excel priority strings to Priority enum */
+    private Priority mapExcelPriority(String raw) {
+        if (raw == null || raw.isBlank()) return Priority.MEDIUM;
+        return switch (raw.trim().toLowerCase()) {
+            case "critical", "p0", "blocker"          -> Priority.CRITICAL;
+            case "high", "p1", "major"                -> Priority.HIGH;
+            case "medium", "p2", "normal", "moderate" -> Priority.MEDIUM;
+            case "low", "p3", "minor", "trivial"      -> Priority.LOW;
+            default                                   -> Priority.MEDIUM;
+        };
+    }
+
+    /** Issue #18: Resolve call number from Excel, create if not exists */
+    private CallNumber resolveCallNumber(Project project, String callNumberCode) {
+        if (callNumberCode == null || callNumberCode.isBlank()) {
+            return null;
+        }
+        String code = callNumberCode.trim().toUpperCase();
+        return callNumberRepository.findByCodeAndProject(code, project)
+                .orElseGet(() -> callNumberRepository.save(
+                        CallNumber.builder()
+                                .code(code)
+                                .name(code)  // Use code as name for auto-created call numbers
+                                .project(project)
+                                .active(true)
+                                .build()));
     }
 
     private String formatStatus(TestStatus s) {

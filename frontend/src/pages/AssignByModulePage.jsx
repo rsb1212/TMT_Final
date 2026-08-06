@@ -193,13 +193,15 @@ export default function AssignByModulePage() {
     if (selectedProject) params.projectId = selectedProject;
     if (selectedModule)  params.module    = selectedModule;
     // Get unassigned cases only (no assignedTo)
-    testCaseApi.list(params)
-      .then(r => {
-        const items = (r.data.data?.content || r.data.data || [])
-          // Show only cases not yet assigned (DRAFT or SME_APPROVED)
-          .filter(tc => !tc.assignedTo && ['DRAFT', 'SME_APPROVED', 'PENDING_SME_REVIEW'].includes(tc.status));
-        setAllCases(items);
-      })
+        testCaseApi.list(params)
+          .then(r => {
+            const items = (r.data.data?.content || r.data.data || [])
+              // Show assignable cases: DRAFT, SME_APPROVED, PENDING_SME_REVIEW, RETEST
+              // Include cases even if they have an assignedTo (e.g., after SME approval cleared the field,
+              // or after RETEST status where manager needs to reassign)
+              .filter(tc => ['DRAFT', 'SME_APPROVED', 'PENDING_SME_REVIEW', 'RETEST'].includes(tc.status));
+            setAllCases(items);
+          })
       .catch(() => setAllCases([]))
       .finally(() => setCasesLoading(false));
   }, [selectedProject, selectedModule]);

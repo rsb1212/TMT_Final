@@ -6,6 +6,7 @@ import com.testmgmt.service.AttachmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -73,6 +74,24 @@ public class AttachmentController {
                         "attachment; filename=\"" + filename + "\"")
                 .contentType(mediaType)
                 .body(resource);
+    }
+
+    /**
+     * Download test evidence as PDF - converts any file format to PDF.
+     * All test evidence downloads will be in PDF format for standardization.
+     */
+    @GetMapping("/attachments/{id}/download-pdf")
+    @Operation(summary = "Download test evidence as PDF — all files are converted to PDF format for standardized evidence")
+    public ResponseEntity<ByteArrayResource> downloadAsPdf(@PathVariable UUID id) throws IOException {
+        ByteArrayResource pdfResource = attachmentService.downloadAsPdf(id);
+        String pdfFilename = attachmentService.getPdfFileName(id);
+        
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + pdfFilename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .contentLength(pdfResource.contentLength())
+                .body(pdfResource);
     }
 
     @DeleteMapping("/attachments/{id}")

@@ -2,6 +2,7 @@ package com.testmgmt.service;
 
 import com.testmgmt.dto.request.WorkflowDTOs.CreateTestCaseRequest;
 import com.testmgmt.dto.request.WorkflowDTOs.StepRequest;
+import com.testmgmt.dto.response.ResponseDTOs.CallNumberResponse;
 import com.testmgmt.dto.response.ResponseDTOs.ModuleResponse;
 import com.testmgmt.dto.response.ResponseDTOs.ProjectResponse;
 import com.testmgmt.dto.response.ResponseDTOs.TestCaseResponse;
@@ -246,6 +247,15 @@ public class TestCaseService {
                         ? ModuleResponse.builder()
                                 .id(tc.getModule().getId())
                                 .name(tc.getModule().getName())
+                                .build()
+                        : null)
+                .callNumber(tc.getCallNumber() != null
+                        ? CallNumberResponse.builder()
+                                .id(tc.getCallNumber().getId())
+                                .code(tc.getCallNumber().getCode())
+                                .name(tc.getCallNumber().getName())
+                                .fullPath(tc.getCallNumber().getFullPath())
+                                .jiraKey(tc.getCallNumber().getJiraKey())
                                 .build()
                         : null)
                 .createdBy(AuthService.toUserResponse(tc.getCreatedBy()))

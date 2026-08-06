@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * Records every execution attempt of a test case by a tester.
@@ -19,10 +20,14 @@ import java.time.Instant;
                 @Index(name = "idx_te_executed_by", columnList = "executed_by_id"),
                 @Index(name = "idx_te_result",      columnList = "result"),
                 @Index(name = "idx_te_project",     columnList = "project_id"),
-                @Index(name = "idx_te_executed_at", columnList = "executed_at")
+                @Index(name = "idx_te_executed_at", columnList = "executed_at"),
+                @Index(name = "idx_te_tenant", columnList = "tenant_id")
         })
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class TestExecution extends BaseEntity {
+
+    @Column(name = "tenant_id")
+    private UUID tenantId;
 
     /** The test case being executed */
     @ManyToOne(fetch = FetchType.LAZY)

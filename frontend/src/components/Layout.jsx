@@ -1,14 +1,16 @@
+import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import {
   LayoutDashboard, FolderKanban, ClipboardList, Bug, GitBranch, Phone,
-  BarChart2, PlayCircle, Users, LogOut, ChevronRight,
+  BarChart2, PlayCircle, Users, LogOut, ChevronRight, ChevronLeft,
   Layers, Calendar, CheckSquare, TrendingUp, BookOpen,
-  FlaskConical, Activity, TestTube2, Sun, Moon, FolderOpen
+  FlaskConical, Activity, TestTube2, Sun, Moon, FolderOpen, Building2
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import GlobalSearchBar  from './GlobalSearchBar';
+import TenantSelector   from './TenantSelector';
 import BatLogo from '../data/animal.svg';
 import './Layout.css';
 
@@ -33,6 +35,7 @@ const NAV_SECTIONS = [
       { to: '/workload',         icon: Activity,     label: 'Workload',         roles: ['MANAGER','ADMIN'] },
       { to: '/workflow',         icon: GitBranch,    label: 'Workflow / SME',   roles: ['MANAGER','SME','ADMIN'] },
       { to: '/uat-workflow',     icon: FlaskConical, label: 'UAT Workflow',     roles: ['MANAGER','SME','ADMIN'] },
+      { to: '/sme-dashboard',    icon: TrendingUp,   label: 'SME Dashboard',    roles: ['MANAGER','SME','ADMIN'] },
       { to: '/assign-by-module', icon: Layers,       label: 'Assign by Module', roles: ['MANAGER','ADMIN'] },
       { to: '/daily-tracking',   icon: Calendar,     label: 'Daily Tracking',   roles: ['MANAGER','ADMIN'] },
       { to: '/productivity',     icon: BarChart2,    label: 'Productivity',     roles: ['MANAGER','ADMIN'] },
@@ -44,6 +47,12 @@ const NAV_SECTIONS = [
     items: [
       { to: '/my-cases',    icon: CheckSquare, label: 'My Test Cases',   roles: ['TESTER'] },
       { to: '/productivity',icon: TrendingUp,  label: 'My Productivity', roles: ['TESTER'] },
+    ],
+  },
+  {
+    label: 'Administration',
+    items: [
+      { to: '/tenants', icon: Building2, label: 'Tenants', roles: ['ADMIN'] },
     ],
   },
 ];
@@ -71,6 +80,7 @@ export default function Layout() {
   const { user, logout } = useAuth();
   const { isDark, toggle } = useTheme();
   const navigate = useNavigate();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
   const palette = isDark ? ROLE_STYLES_DARK : ROLE_STYLES;
   const rs = palette[user?.role] || palette.VIEWER;
@@ -79,12 +89,24 @@ export default function Layout() {
     <div className="layout">
 
       {/* ── Sidebar ────────────────────────────── */}
-      <aside className="sidebar">
+      <aside 
+        className={`sidebar ${sidebarCollapsed ? 'collapsed' : 'expanded'}`}
+        onMouseEnter={() => setSidebarCollapsed(false)}
+        onMouseLeave={() => setSidebarCollapsed(true)}
+      >
+        {/* Collapse Toggle Button */}
+        <button 
+          className="sidebar-toggle"
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {sidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        </button>
 
         {/* Brand */}
         <div className="sidebar-brand">
           <div className="brand-logo">
-            <img src={BatLogo} alt="Bat Logo" width={24} height={24} />
+            <img src={BatLogo} alt="Bat Logo" width={28} height={28} />
           </div>
           <div className="brand-text">
             <span className="brand-name">SmartQA</span>
@@ -106,9 +128,11 @@ export default function Layout() {
                   <NavLink
                     key={to} to={to} end={exact}
                     className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+                    data-tooltip={label}
+                    title={sidebarCollapsed ? label : ''}
                   >
                     <span className="nav-icon">
-                      <Icon size={15} strokeWidth={1.9} />
+                      <Icon size={16} strokeWidth={1.9} />
                     </span>
                     <span className="nav-label">{label}</span>
                     <ChevronRight size={11} className="nav-arrow" />
@@ -172,6 +196,7 @@ export default function Layout() {
             <GlobalSearchBar />
           </div>
           <div className="topbar-actions">
+            <TenantSelector />
             <NotificationBell />
             <div className="topbar-divider" />
             <div className="topbar-user-pill" style={{ background: rs.bg, color: rs.text }}>
