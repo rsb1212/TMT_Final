@@ -11,7 +11,7 @@ import {
 import NotificationBell from './NotificationBell';
 import GlobalSearchBar  from './GlobalSearchBar';
 import TenantSelector   from './TenantSelector';
-import BatLogo from '../data/animal.svg';
+import BatLogo from '../data/bajaj.png';
 import './Layout.css';
 
 const NAV_SECTIONS = [

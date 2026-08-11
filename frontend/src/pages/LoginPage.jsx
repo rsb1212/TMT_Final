@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { Eye, EyeOff, Shield, Sun, Moon } from 'lucide-react';
 import './LoginPage.css'
-import BatLogo from '../data/animal.svg';
+import BatLogo from '../data/animal-bat.svg';
 
 /* Demo accounts — colours adapt per theme */
 const DEMO_ACCOUNTS = [

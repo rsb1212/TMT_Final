@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import { RefreshCw, ChevronDown, ChevronRight, Download, CheckCircle2,
   XCircle, Clock, AlertTriangle, BarChart2, Activity, Shield, Users,
-  Building2, UserCheck, FileText, ArrowRight, Mail, Phone } from 'lucide-react';
+  Building2, UserCheck, FileText, ArrowRight, Mail, Phone, PanelLeftClose, PanelLeft } from 'lucide-react';
 
 const S = {
   Pass:        { color: '#00e676', bg: 'rgba(0,230,118,0.12)'   },
@@ -281,6 +281,7 @@ export default function Dashboard() {
   const [smeData,         setSmeData]         = useState(null);
   const [expandedDepts,   setExpandedDepts]   = useState({});
   const [smeView,         setSmeView]         = useState('departments'); // 'departments' | 'summary'
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // Sidebar collapse state
 
   const isSME     = user?.role === 'SME';
   const isManager = ['MANAGER', 'ADMIN'].includes(user?.role);
@@ -435,15 +436,40 @@ export default function Dashboard() {
     <div style={{ display: 'flex', gap: 20 }}>
 
       {/* ── Project tree sidebar ─────────────────────── */}
-      <div style={{ width: 210, flexShrink: 0 }}>
+      <div style={{ 
+        width: sidebarCollapsed ? 40 : 210, 
+        flexShrink: 0,
+        transition: 'width 0.2s ease-in-out'
+      }}>
         <div className="card" style={{ position: 'sticky', top: 20 }}>
-          <div className="card-header" style={{ marginBottom: 8 }}>
-            <span className="card-title" style={{ fontSize: 11 }}>PROJECTS</span>
+          <div className="card-header" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {!sidebarCollapsed && <span className="card-title" style={{ fontSize: 11 }}>PROJECTS</span>}
+            <button 
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 4,
+                borderRadius: 4,
+                color: 'var(--text2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background 0.15s, color 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--accent)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text2)'; }}
+              title={sidebarCollapsed ? 'Expand projects' : 'Collapse projects'}
+            >
+              {sidebarCollapsed ? <PanelLeft size={16} /> : <PanelLeftClose size={16} />}
+            </button>
           </div>
-          {projects.length === 0
-            ? <div style={{ fontSize: 12, color: 'var(--text3)', padding: '8px 0' }}>No projects</div>
-            : <ProjectTree projects={projects} selectedId={selectedProject} onSelect={setSelectedProject} />
-          }
+          {!sidebarCollapsed && (
+            projects.length === 0
+              ? <div style={{ fontSize: 12, color: 'var(--text3)', padding: '8px 0' }}>No projects</div>
+              : <ProjectTree projects={projects} selectedId={selectedProject} onSelect={setSelectedProject} />
+          )}
         </div>
       </div>
 
@@ -749,6 +775,188 @@ export default function Dashboard() {
         {/* ── Manager / Tester Dashboard (non-SME) ─────────────────── */}
         {!loading && !isSME && d && (
           <>
+            {/* ── Module Execution Status Table (Excel-style) - MOVED TO TOP ─────────────────────── */}
+            {modules.length > 0 && (
+              <div className="card" style={{ marginBottom: 20 }}>
+                <div className="card-header" style={{ background: '#003366', color: 'white', borderRadius: '8px 8px 0 0' }}>
+                  <span className="card-title" style={{ color: 'white' }}>
+                    {d?.projectName || 'Project'} : Day 1 - Execution Status
+                  </span>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>
+                    {modules.length} modules
+                  </span>
+                </div>
+                <div className="table-wrap" style={{ overflowX: 'auto' }}>
+                  <table style={{ fontSize: 12, minWidth: 1600, borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ background: '#003366', color: 'white', height: 50 }}>
+                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 120, width: 120, verticalAlign: 'middle', padding: '12px 8px' }}>MODULE</th>
+                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 80, width: 80, verticalAlign: 'middle', padding: '12px 8px' }}>TOTAL TCS</th>
+                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 100, width: 100, verticalAlign: 'middle', padding: '12px 8px' }}>TOTAL<br/>EXECUTABLE<br/>CASES</th>
+                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 80, width: 80, verticalAlign: 'middle', padding: '12px 8px' }}>EXECUTED</th>
+                        <th rowSpan={2} style={{ background: '#f57c00', color: 'white', borderRight: '1px solid #e65100', minWidth: 60, width: 60, verticalAlign: 'middle', padding: '12px 8px' }}>PASS</th>
+                        <th rowSpan={2} style={{ background: '#1976d2', color: 'white', borderRight: '1px solid #1565c0', minWidth: 60, width: 60, verticalAlign: 'middle', padding: '12px 8px' }}>FAIL</th>
+                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 100, width: 100, verticalAlign: 'middle', padding: '12px 8px' }}>PENDING FOR<br/>EXECUTION</th>
+                        <th rowSpan={2} style={{ background: '#1976d2', color: 'white', borderRight: '1px solid #1565c0', minWidth: 110, width: 110, verticalAlign: 'middle', padding: '12px 8px' }}>TEST CASES ON<br/>HOLD DUE TO<br/>OPEN DEFECTS</th>
+                        <th rowSpan={2} style={{ background: '#1976d2', color: 'white', borderRight: '1px solid #1565c0', minWidth: 110, width: 110, verticalAlign: 'middle', padding: '12px 8px' }}>COMPLETION %<br/>ON PASSED<br/>TEST CASES</th>
+                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 70, width: 70, verticalAlign: 'middle', padding: '12px 8px' }}>RELEASE<br/>REQ</th>
+                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 50, width: 50, verticalAlign: 'middle', padding: '12px 8px' }}>NA</th>
+                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 80, width: 80, verticalAlign: 'middle', padding: '12px 8px' }}>NOT<br/>RELEASED</th>
+                        <th colSpan={4} style={{ background: '#4caf50', color: 'white', textAlign: 'center', borderRight: '1px solid #388e3c', borderBottom: '1px solid #2e7d32', padding: '10px 8px' }}>AUTOMATION</th>
+                        <th colSpan={3} style={{ background: '#003366', color: 'white', textAlign: 'center', borderBottom: '1px solid #004080', padding: '10px 8px' }}>MANUAL</th>
+                      </tr>
+                      <tr style={{ background: '#004080', color: 'white', height: 45 }}>
+                        <th style={{ background: '#4caf50', color: 'white', minWidth: 90, width: 90, borderRight: '1px solid #388e3c', padding: '10px 8px' }}>TEST COUNT<br/>AUTOMATION</th>
+                        <th style={{ background: '#4caf50', color: 'white', minWidth: 90, width: 90, borderRight: '1px solid #388e3c', padding: '10px 8px' }}>AUTOMATION<br/>%</th>
+                        <th style={{ background: '#4caf50', color: 'white', minWidth: 90, width: 90, borderRight: '1px solid #388e3c', padding: '10px 8px' }}>PASS<br/>AUTOMATION</th>
+                        <th style={{ background: '#4caf50', color: 'white', minWidth: 100, width: 100, borderRight: '1px solid #004080', padding: '10px 8px' }}>AUTOMATION<br/>COMPLETION %</th>
+                        <th style={{ background: '#003366', color: 'white', minWidth: 80, width: 80, borderRight: '1px solid #004080', padding: '10px 8px' }}>TEST COUNT<br/>MANUAL</th>
+                        <th style={{ background: '#003366', color: 'white', minWidth: 70, width: 70, borderRight: '1px solid #004080', padding: '10px 8px' }}>PASS<br/>MANUAL</th>
+                        <th style={{ background: '#003366', color: 'white', minWidth: 100, width: 100, padding: '10px 8px' }}>MANUAL<br/>COMPLETION %</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {modules.map((m, idx) => {
+                        const total = Number(m.total) || 0;
+                        const passed = Number(m.passed) || 0;
+                        const failed = Number(m.failed) || 0;
+                        const naCount = Number(m.naCount) || 0;
+                        const notReleased = Number(m.notReleased) || 0;
+                        const defectRaised = Number(m.defectRaised) || 0;
+                        const releaseRequested = Number(m.releaseRequested) || 0;
+                        
+                        // Calculate metrics
+                        const executableCases = total - naCount;
+                        const executed = passed + failed;
+                        const pendingForExecution = executableCases - executed;
+                        const onHoldDueToDefects = defectRaised;
+                        const completionOnPassed = executableCases > 0 ? Math.round((passed / executableCases) * 100) : 0;
+                        
+                        // Automation vs Manual split (estimate: 85% automation for now - can be adjusted based on actual data)
+                        const automationCount = Math.round(total * 0.85);
+                        const manualCount = total - automationCount;
+                        const automationPct = total > 0 ? Math.round((automationCount / total) * 100) : 0;
+                        const passAutomation = Math.round(passed * 0.85);
+                        const passManual = passed - passAutomation;
+                        const automationCompletionPct = automationCount > 0 ? Math.round((passAutomation / automationCount) * 100) : 0;
+                        const manualCompletionPct = manualCount > 0 ? Math.round((passManual / manualCount) * 100) : 0;
+
+                        return (
+                          <tr key={m.moduleId} style={{ 
+                            background: idx % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-raised)',
+                            borderBottom: '1px solid var(--border)',
+                            height: 48
+                          }}>
+                            <td style={{ fontWeight: 600, background: '#003366', color: 'white', padding: '12px 10px', verticalAlign: 'middle' }}>{m.moduleName}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{total}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{executableCases}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{executed}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#fff3e0', color: '#e65100', fontWeight: 700, padding: '12px 8px', verticalAlign: 'middle' }}>{passed}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{failed}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{pendingForExecution}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e3f2fd', padding: '12px 8px', verticalAlign: 'middle' }}>{onHoldDueToDefects}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e3f2fd', fontWeight: 700, padding: '12px 8px', verticalAlign: 'middle' }}>{completionOnPassed}%</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{releaseRequested}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{naCount}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{notReleased}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e8f5e9', padding: '12px 8px', verticalAlign: 'middle' }}>{automationCount}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e8f5e9', padding: '12px 8px', verticalAlign: 'middle' }}>{automationPct}%</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e8f5e9', padding: '12px 8px', verticalAlign: 'middle' }}>{passAutomation}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e8f5e9', fontWeight: 700, padding: '12px 8px', verticalAlign: 'middle' }}>{automationCompletionPct}%</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{manualCount}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{passManual}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', fontWeight: 700, padding: '12px 8px', verticalAlign: 'middle' }}>{manualCompletionPct}%</td>
+                          </tr>
+                        );
+                      })}
+                      {/* Totals row */}
+                      <tr style={{ background: '#003366', color: 'white', fontWeight: 700, height: 48 }}>
+                        <td style={{ fontWeight: 700, padding: '12px 10px', verticalAlign: 'middle' }}>Total</td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {modules.reduce((sum, m) => sum + (Number(m.total) || 0), 0)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {modules.reduce((sum, m) => sum + (Number(m.total) || 0) - (Number(m.naCount) || 0), 0)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {modules.reduce((sum, m) => sum + (Number(m.passed) || 0) + (Number(m.failed) || 0), 0)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#f57c00', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {modules.reduce((sum, m) => sum + (Number(m.passed) || 0), 0)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {modules.reduce((sum, m) => sum + (Number(m.failed) || 0), 0)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {modules.reduce((sum, m) => {
+                            const total = Number(m.total) || 0;
+                            const na = Number(m.naCount) || 0;
+                            const passed = Number(m.passed) || 0;
+                            const failed = Number(m.failed) || 0;
+                            return sum + ((total - na) - (passed + failed));
+                          }, 0)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {modules.reduce((sum, m) => sum + (Number(m.defectRaised) || 0), 0)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {(() => {
+                            const totalExec = modules.reduce((sum, m) => sum + (Number(m.total) || 0) - (Number(m.naCount) || 0), 0);
+                            const totalPassed = modules.reduce((sum, m) => sum + (Number(m.passed) || 0), 0);
+                            return totalExec > 0 ? Math.round((totalPassed / totalExec) * 100) : 0;
+                          })()}%
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {modules.reduce((sum, m) => sum + (Number(m.releaseRequested) || 0), 0)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {modules.reduce((sum, m) => sum + (Number(m.naCount) || 0), 0)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {modules.reduce((sum, m) => sum + (Number(m.notReleased) || 0), 0)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#4caf50', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {Math.round(modules.reduce((sum, m) => sum + (Number(m.total) || 0), 0) * 0.85)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#4caf50', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {(() => {
+                            const total = modules.reduce((sum, m) => sum + (Number(m.total) || 0), 0);
+                            const auto = Math.round(total * 0.85);
+                            return total > 0 ? Math.round((auto / total) * 100) : 0;
+                          })()}%
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#4caf50', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {Math.round(modules.reduce((sum, m) => sum + (Number(m.passed) || 0), 0) * 0.85)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#4caf50', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {(() => {
+                            const total = modules.reduce((sum, m) => sum + (Number(m.total) || 0), 0);
+                            const autoCount = Math.round(total * 0.85);
+                            const passAuto = Math.round(modules.reduce((sum, m) => sum + (Number(m.passed) || 0), 0) * 0.85);
+                            return autoCount > 0 ? Math.round((passAuto / autoCount) * 100) : 0;
+                          })()}%
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {Math.round(modules.reduce((sum, m) => sum + (Number(m.total) || 0), 0) * 0.15)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {Math.round(modules.reduce((sum, m) => sum + (Number(m.passed) || 0), 0) * 0.15)}
+                        </td>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                          {(() => {
+                            const total = modules.reduce((sum, m) => sum + (Number(m.total) || 0), 0);
+                            const manualCount = Math.round(total * 0.15);
+                            const passManual = Math.round(modules.reduce((sum, m) => sum + (Number(m.passed) || 0), 0) * 0.15);
+                            return manualCount > 0 ? Math.round((passManual / manualCount) * 100) : 0;
+                          })()}%
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             {/* ── Row 1: Key stats ──────────────────────────────── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)',
               gap: 10, marginBottom: 12 }}>
@@ -872,62 +1080,6 @@ export default function Dashboard() {
                     <Bar dataKey="Not Rel"  stackId="a" fill={S.NotReleased.color} />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
-            )}
-
-            {/* ── Module status detail table ─────────────────────── */}
-            {modules.length > 0 && (
-              <div className="card">
-                <div className="card-header">
-                  <span className="card-title">Module Status Detail</span>
-                </div>
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Module</th>
-                        <th style={{ color: 'var(--accent)' }}>Total</th>
-                        <th style={{ color: S.Pass.color }}>Pass</th>
-                        <th style={{ color: S.Fail.color }}>Fail</th>
-                        <th style={{ color: S.InProgress.color }}>In Progress</th>
-                        <th style={{ color: S.NA.color }}>NA</th>
-                        <th style={{ color: S.NotReleased.color }}>Not Released</th>
-                        <th style={{ color: S.Defect.color }}>Defect</th>
-                        <th>Pass Rate</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {modules.map(m => (
-                        <tr key={m.moduleId}>
-                          <td style={{ fontWeight: 600 }}>{m.moduleName}</td>
-                          <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)', fontWeight: 700 }}>{m.total}</td>
-                          <td style={{ fontFamily: 'var(--font-mono)', color: S.Pass.color }}>{m.passed}</td>
-                          <td style={{ fontFamily: 'var(--font-mono)', color: S.Fail.color }}>{m.failed}</td>
-                          <td style={{ fontFamily: 'var(--font-mono)', color: S.InProgress.color }}>{m.inProgress}</td>
-                          <td style={{ fontFamily: 'var(--font-mono)', color: S.NA.color }}>{m.naCount}</td>
-                          <td style={{ fontFamily: 'var(--font-mono)', color: S.NotReleased.color }}>{m.notReleased}</td>
-                          <td style={{ fontFamily: 'var(--font-mono)', color: S.Defect.color }}>{m.defectRaised}</td>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ flex: 1, height: 6, background: 'var(--bg-deep)',
-                                borderRadius: 3, overflow: 'hidden', minWidth: 50 }}>
-                                <div style={{ height: '100%', borderRadius: 3,
-                                  width: `${m.passRate}%`,
-                                  background: m.passRate >= 80 ? S.Pass.color
-                                    : m.passRate >= 60 ? S.NA.color : S.Fail.color }} />
-                              </div>
-                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
-                                color: m.passRate >= 80 ? S.Pass.color
-                                  : m.passRate >= 60 ? S.NA.color : S.Fail.color }}>
-                                {m.passRate}%
-                              </span>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
               </div>
             )}
           </>

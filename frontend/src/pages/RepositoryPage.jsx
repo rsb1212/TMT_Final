@@ -215,7 +215,11 @@ function TreeNode({ node, level = 0, selectedPath, onSelect, moduleColor, expand
   if (isAddNew) {
     return (
       <div
-        onClick={() => onSelect(node.id, node.name, true)}
+        onClick={(e) => {
+          e.stopPropagation();
+          console.log('Add New clicked:', node.id);
+          onSelect(node.id, node.name, true);
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -403,12 +407,18 @@ export default function RepositoryPage() {
   const [showUpload, setShowUpload] = useState(false);
 
   // Tree navigation state
-  const [modules] = useState(DEFAULT_MODULES);
+  const [modules, setModules] = useState(DEFAULT_MODULES);
   const [expandedModules, setExpandedModules] = useState(new Set(['agilic']));
-  const [expandedNodes, setExpandedNodes] = useState(new Set(['agilic-product-main', 'agilic-nb-uw']));
-  const [selectedPath, setSelectedPath] = useState('agilic-product-name');
-  const [selectedName, setSelectedName] = useState('Product Name');
+  const [expandedNodes, setExpandedNodes] = useState(new Set(['agilic-product', 'agilic-product-modification', 'agilic-pd-calls', 'agilic-cr-calls']));
+  const [selectedPath, setSelectedPath] = useState('');
+  const [selectedName, setSelectedName] = useState('');
   const [legacyCategory, setLegacyCategory] = useState('');
+
+  // Add New Module Modal state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newModuleName, setNewModuleName] = useState('');
+  const [addToParentId, setAddToParentId] = useState('');
+  const [addToParentName, setAddToParentName] = useState('');
 
   // Upload form state
   const [uploadFile, setUploadFile] = useState(null);
@@ -440,10 +450,34 @@ export default function RepositoryPage() {
     });
   };
 
+  // Helper function to find node name by ID
+  const findNodeName = (nodes, targetId) => {
+    for (const node of nodes) {
+      if (node.id === targetId) return node.name;
+      if (node.children) {
+        const found = findNodeName(node.children, targetId);
+        if (found) return found;
+      }
+      if (node.categories) {
+        const found = findNodeName(node.categories, targetId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
   const handleSelectPath = (pathId, name, isAddNew = false) => {
+    console.log('handleSelectPath called:', { pathId, name, isAddNew });
     if (isAddNew) {
-      // Handle "Add New" click - could open a modal to add new item
-      showMsg('info', `Add new item in "${name}" - Coming soon!`);
+      // Extract parent ID from the "Add New" item ID (e.g., 'agilic-product-add' -> 'agilic-product')
+      const parentId = pathId.replace(/-add$/, '');
+      console.log('Opening Add New modal for parent:', parentId);
+      setAddToParentId(parentId);
+      // Get parent name from the modules tree
+      const parentName = findNodeName(modules, parentId) || parentId.split('-').slice(1).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+      setAddToParentName(parentName);
+      setNewModuleName('');
+      setShowAddModal(true);
       return;
     }
     setSelectedPath(pathId);
@@ -464,6 +498,100 @@ export default function RepositoryPage() {
     };
     const key = name.toLowerCase();
     setLegacyCategory(legacyMap[key] || '');
+  };
+
+  // Random color generator for new modules
+  const getRandomColor = () => {
+    const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#6366f1'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
+
+  // Handle adding a new module/item
+  const handleAddNewModule = () => {
+    if (!newModuleName.trim()) {
+      showMsg('error', 'Please enter a module name');
+      return;
+    }
+    
+    const newId = newModuleName.toLowerCase().replace(/\s+/g, '-');
+    
+    // Adding a new top-level module
+    if (addToParentId === 'root') {
+      const newModule = {
+        id: newId,
+        name: newModuleName.trim(),
+        icon: 'folder',
+        color: getRandomColor(),
+        categories: [
+          {
+            id: `${newId}-default`,
+            name: 'Default',
+            icon: 'folder',
+            children: [
+              { id: `${newId}-default-add`, name: 'Add New', icon: 'plus', isAddNew: true }
+            ]
+          }
+        ]
+      };
+      
+      setModules(prevModules => [...prevModules, newModule]);
+      setExpandedModules(prev => new Set([...prev, newId]));
+      showMsg('success', `Module "${newModuleName.trim()}" added successfully!`);
+      setShowAddModal(false);
+      setNewModuleName('');
+      return;
+    }
+    
+    // Adding to existing parent
+    const fullNewId = `${addToParentId}-${newId}`;
+    const newItem = {
+      id: fullNewId,
+      name: newModuleName.trim(),
+      icon: 'file'
+    };
+    
+    // Deep clone and update the modules tree
+    const addItemToNode = (nodes) => {
+      return nodes.map(node => {
+        // Check if this is the parent we're looking for
+        if (node.id === addToParentId) {
+          const children = node.children ? [...node.children] : [];
+          // Find the "Add New" item and insert before it
+          const addNewIndex = children.findIndex(c => c.isAddNew);
+          if (addNewIndex >= 0) {
+            children.splice(addNewIndex, 0, newItem);
+          } else {
+            children.push(newItem);
+          }
+          return { ...node, children };
+        }
+        
+        // Recursively check children
+        if (node.children && node.children.length > 0) {
+          return { ...node, children: addItemToNode(node.children) };
+        }
+        
+        // Recursively check categories
+        if (node.categories && node.categories.length > 0) {
+          return { ...node, categories: addItemToNode(node.categories) };
+        }
+        
+        return node;
+      });
+    };
+    
+    setModules(prevModules => addItemToNode(prevModules));
+    
+    // Expand the parent node to show the new item
+    setExpandedNodes(prev => new Set([...prev, addToParentId]));
+    
+    // Select the new item
+    setSelectedPath(fullNewId);
+    setSelectedName(newModuleName.trim());
+    
+    showMsg('success', `"${newModuleName.trim()}" added successfully!`);
+    setShowAddModal(false);
+    setNewModuleName('');
   };
 
   // Load projects
@@ -639,6 +767,12 @@ export default function RepositoryPage() {
           {/* Add New Module Button */}
           {isAdmin && (
             <div
+              onClick={() => {
+                setAddToParentId('root');
+                setAddToParentName('Repository');
+                setNewModuleName('');
+                setShowAddModal(true);
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -962,6 +1096,79 @@ export default function RepositoryPage() {
                 style={{ display: 'flex', alignItems: 'center', gap: 6, background: currentModule.color }}
               >
                 {uploading ? 'Uploading…' : <><Upload size={14} /> Upload</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════════════
+          ADD NEW MODULE MODAL
+          ════════════════════════════════════════════════════════════════════════ */}
+      {showAddModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: 'var(--bg-card)',
+            borderRadius: 16,
+            padding: 28,
+            width: 420,
+            maxWidth: '95vw',
+            border: '1px solid var(--border)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Plus size={20} color="#10b981" />
+                <h3 style={{ margin: 0, fontSize: 18 }}>Add New Module</h3>
+              </div>
+              <button 
+                onClick={() => setShowAddModal(false)} 
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>
+                Adding to: <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{addToParentName}</span>
+              </label>
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>Module Name *</label>
+              <input
+                type="text"
+                value={newModuleName}
+                onChange={e => setNewModuleName(e.target.value)}
+                placeholder="Enter module name..."
+                autoFocus
+                onKeyDown={e => e.key === 'Enter' && handleAddNewModule()}
+                style={{
+                  width: '100%', 
+                  padding: '12px 14px', 
+                  borderRadius: 8,
+                  border: '1px solid var(--border)', 
+                  background: 'var(--bg-raised)',
+                  color: 'var(--text1)', 
+                  fontSize: 14,
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+              <button className="btn btn-secondary" onClick={() => setShowAddModal(false)}>Cancel</button>
+              <button
+                className="btn btn-primary"
+                onClick={handleAddNewModule}
+                disabled={!newModuleName.trim()}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#10b981' }}
+              >
+                <Plus size={14} /> Add Module
               </button>
             </div>
           </div>

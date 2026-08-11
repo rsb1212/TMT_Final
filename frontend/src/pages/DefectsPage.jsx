@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { defectApi, projectApi, jiraApi } from '../api';
 import { useAuth } from '../hooks/useAuth';
 import { Plus, AlertTriangle, RefreshCw, X, Bug, ExternalLink, Send } from 'lucide-react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const SEVERITIES    = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
 const PRIORITIES    = ['P1', 'P2', 'P3', 'P4'];
@@ -57,6 +58,7 @@ export default function DefectsPage() {
   const [alert,           setAlert]           = useState(null);
   const [filterSev,       setFilterSev]       = useState('');
   const [filterStatus,    setFilterStatus]    = useState('');
+  const [allDefects,      setAllDefects]      = useState([]); // All defects across projects
   const [form, setForm] = useState({
     title: '', description: '', projectId: '',
     testCaseId: '', severity: 'HIGH', priority: 'P2', assignedToId: '',
@@ -64,35 +66,49 @@ export default function DefectsPage() {
 
   const canUpdateStatus = CAN_UPDATE_STATUS.includes(user?.role);
 
-  // Load projects on mount
-  useEffect(() => {
-    projectApi.list().then(r => {
-      const all = r.data.data || [];
-      // Flatten: include root + sub-projects
+  // Load ALL defects from all projects on mount
+  const loadAllDefects = useCallback(async () => {
+    setLoading(true);
+    try {
+      const projectsRes = await projectApi.list();
+      const allProjects = projectsRes.data.data || [];
       const flat = [];
-      all.forEach(p => {
+      allProjects.forEach(p => {
         flat.push(p);
         (p.subProjects || []).forEach(sub => flat.push(sub));
       });
+      
+      // Update projects list for dropdown
       setProjects(flat);
-      if (flat.length > 0) {
-        setSelectedProject(flat[0].id);
-        setForm(f => ({ ...f, projectId: flat[0].id }));
-      }
-    }).catch(err => console.error(err));
+      
+      // Load defects from all projects
+      const defectPromises = flat.map(p => 
+        defectApi.list(p.id).then(r => r.data.data || []).catch(() => [])
+      );
+      const allDefectsArrays = await Promise.all(defectPromises);
+      const combined = allDefectsArrays.flat();
+      setAllDefects(combined);
+      setDefects(combined);
+    } catch (err) {
+      setAlert({ type: 'error', msg: 'Failed to load defects' });
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Load defects when project changes
-  const loadDefects = useCallback(() => {
-    if (!selectedProject) return;
-    setLoading(true);
-    defectApi.list(selectedProject)
-      .then(r => setDefects(r.data.data || []))
-      .catch(() => setAlert({ type: 'error', msg: 'Failed to load defects' }))
-      .finally(() => setLoading(false));
-  }, [selectedProject]);
+  // Load all defects on mount
+  useEffect(() => { loadAllDefects(); }, [loadAllDefects]);
 
-  useEffect(() => { loadDefects(); }, [loadDefects]);
+  // Filter defects when project selection changes
+  useEffect(() => {
+    if (!selectedProject) {
+      // Show all defects
+      setDefects(allDefects);
+    } else {
+      // Filter by selected project
+      setDefects(allDefects.filter(d => d.project?.id === selectedProject));
+    }
+  }, [selectedProject, allDefects]);
 
   // Show alert and auto-dismiss
   const showMsg = (type, msg) => {
@@ -103,6 +119,7 @@ export default function DefectsPage() {
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!form.title.trim()) { showMsg('error', 'Title is required'); return; }
+    if (!form.projectId) { showMsg('error', 'Project is required'); return; }
     setSaving(true);
     try {
       const created = await defectApi.create({
@@ -114,8 +131,8 @@ export default function DefectsPage() {
       showMsg('success', `Defect ${created.data.data?.code || ''} reported successfully`);
       setShowCreate(false);
       setForm(f => ({ ...f, title: '', description: '', testCaseId: '', assignedToId: '' }));
-      // Immediately reload — real-time sync
-      loadDefects();
+      // Immediately reload all defects — real-time sync
+      loadAllDefects();
     } catch (err) {
       showMsg('error', err.response?.data?.message || 'Failed to create defect');
     } finally {
@@ -126,7 +143,9 @@ export default function DefectsPage() {
   const handleStatusChange = async (id, newStatus) => {
     try {
       const r = await defectApi.updateStatus(id, newStatus);
+      // Update in both defects and allDefects
       setDefects(ds => ds.map(d => d.id === id ? r.data.data : d));
+      setAllDefects(ds => ds.map(d => d.id === id ? r.data.data : d));
     } catch (err) {
       showMsg('error', 'Failed to update status: ' + (err.response?.data?.message || 'Unknown error'));
     }
@@ -139,10 +158,10 @@ export default function DefectsPage() {
       if (r.data.success) {
         const { issueKey, url } = r.data.data;
         showMsg('success', `JIRA issue ${issueKey} created successfully`);
-        // Update local state with the new JIRA key
-        setDefects(ds => ds.map(d => 
-          d.id === defectId ? { ...d, jiraIssueKey: issueKey, jiraUrl: url } : d
-        ));
+        // Update local state with the new JIRA key (both defects and allDefects)
+        const updateFn = d => d.id === defectId ? { ...d, jiraIssueKey: issueKey, jiraUrl: url } : d;
+        setDefects(ds => ds.map(updateFn));
+        setAllDefects(ds => ds.map(updateFn));
       } else {
         showMsg('error', r.data.message || 'Failed to create JIRA issue');
       }
@@ -158,12 +177,46 @@ export default function DefectsPage() {
   const critical = defects.filter(d => d.severity === 'CRITICAL').length;
   const retest   = defects.filter(d => d.status === 'RETEST').length;
 
+  // Calculate repeated defects (defects with similar titles - potential duplicates)
+  const repeatedDefectsData = useMemo(() => {
+    // Group defects by severity for donut chart
+    const bySeverity = defects.reduce((acc, d) => {
+      acc[d.severity] = (acc[d.severity] || 0) + 1;
+      return acc;
+    }, {});
+    
+    return SEVERITIES.map(sev => ({
+      name: sev,
+      value: bySeverity[sev] || 0,
+      color: SEV_COLOR[sev],
+    })).filter(item => item.value > 0);
+  }, [defects]);
+
+  // Calculate status distribution for second donut
+  const statusDistributionData = useMemo(() => {
+    const byStatus = defects.reduce((acc, d) => {
+      acc[d.status] = (acc[d.status] || 0) + 1;
+      return acc;
+    }, {});
+    
+    return DEF_STATUSES.map(status => ({
+      name: status.replace(/_/g, ' '),
+      value: byStatus[status] || 0,
+      color: STAT_COLOR[status],
+    })).filter(item => item.value > 0);
+  }, [defects]);
+
   // Filtered list
   const filtered = defects.filter(d => {
     const matchSev  = !filterSev    || d.severity === filterSev;
     const matchStat = !filterStatus || d.status   === filterStatus;
     return matchSev && matchStat;
   });
+
+  // Get selected project name
+  const selectedProjectName = selectedProject 
+    ? projects.find(p => p.id === selectedProject)?.name || 'Selected Project'
+    : 'All Projects';
 
   return (
     <div>
@@ -172,21 +225,21 @@ export default function DefectsPage() {
         <div>
           <h1 className="page-title">Defects</h1>
           <p className="page-subtitle">
-            {total} total · {open} open · {critical} critical
+            {selectedProjectName} · {total} total · {open} open · {critical} critical
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           <select id="defects-project" name="defects-project" value={selectedProject}
-            onChange={e => { setSelectedProject(e.target.value); setForm(f => ({ ...f, projectId: e.target.value })); }}
+            onChange={e => { setSelectedProject(e.target.value); }}
             style={{ width: 200 }}>
-            <option value="">Select project…</option>
+            <option value="">All Projects</option>
             {projects.map(p => (
               <option key={p.id} value={p.id}>
                 {p.parentProjectId ? `  ↳ ${p.name}` : p.name}
               </option>
             ))}
           </select>
-          <button className="btn btn-secondary" onClick={loadDefects} title="Refresh">
+          <button className="btn btn-secondary" onClick={loadAllDefects} title="Refresh">
             <RefreshCw size={14} />
           </button>
           <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
@@ -228,6 +281,109 @@ export default function DefectsPage() {
         ))}
       </div>
 
+      {/* ── Donut Charts - Severity & Status Distribution ─────────────────────────────────── */}
+      {defects.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+          {/* Severity Distribution Donut */}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Defects by Severity</span>
+              <span style={{ fontSize: 11, color: 'var(--text3)' }}>
+                {total} total defects
+              </span>
+            </div>
+            <div style={{ padding: '16px 0' }}>
+              {repeatedDefectsData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={repeatedDefectsData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={3}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {repeatedDefectsData.map((entry, index) => (
+                        <Cell key={`sev-cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        background: 'var(--bg-raised)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 8,
+                        fontSize: 12,
+                      }}
+                      formatter={(value, name) => [`${value} defects`, name]}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: 11 }}
+                      formatter={(value) => <span style={{ color: 'var(--text2)' }}>{value}</span>}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="empty-state" style={{ padding: 30 }}>
+                  <div className="empty-text">No defects</div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Status Distribution Donut */}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Defects by Status</span>
+              <span style={{ fontSize: 11, color: 'var(--text3)' }}>
+                Current status distribution
+              </span>
+            </div>
+            <div style={{ padding: '16px 0' }}>
+              {statusDistributionData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={statusDistributionData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={3}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {statusDistributionData.map((entry, index) => (
+                        <Cell key={`stat-cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        background: 'var(--bg-raised)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 8,
+                        fontSize: 12,
+                      }}
+                      formatter={(value, name) => [`${value} defects`, name]}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: 11 }}
+                      formatter={(value) => <span style={{ color: 'var(--text2)' }}>{value}</span>}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="empty-state" style={{ padding: 30 }}>
+                  <div className="empty-text">No defects</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Filters ───────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
         <select id="filter-severity" name="filter-severity" value={filterSev} onChange={e => setFilterSev(e.target.value)} style={{ width: 160 }}>
@@ -253,11 +409,6 @@ export default function DefectsPage() {
       {/* ── Table ─────────────────────────────────────────── */}
       {loading ? (
         <div className="loading">Loading defects…</div>
-      ) : !selectedProject ? (
-        <div className="empty-state">
-          <div className="empty-icon">🐞</div>
-          <div className="empty-text">Select a project to view defects</div>
-        </div>
       ) : filtered.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">✅</div>
