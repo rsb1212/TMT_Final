@@ -109,8 +109,8 @@ export default function Layout() {
             <img src={BatLogo} alt="Bat Logo" width={28} height={28} />
           </div>
           <div className="brand-text">
-            <span className="brand-name">SmartQA</span>
-            <span className="brand-tag">Manage Super Data</span>
+            <span className="brand-name">RAYU-TMS</span>
+            <span className="brand-tag">Test Management System</span>
           </div>
         </div>
 
