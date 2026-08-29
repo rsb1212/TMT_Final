@@ -2,21 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
-import { Eye, EyeOff, Shield, Sun, Moon } from 'lucide-react';
+import { Eye, EyeOff, Shield, Sun, Moon, KeyRound } from 'lucide-react';
 import './LoginPage.css'
-import BatLogo from '../data/animal-bat.svg';
-
-/* Demo accounts — colours adapt per theme */
-const DEMO_ACCOUNTS = [
-  { role: 'MANAGER', email: 'manager@testmgmt.io', password: 'Manager@1234',
-    lightColor: '#0284c7', darkColor: '#38bdf8', initial: 'M' },
-  { role: 'TESTER',  email: 'tester@testmgmt.io',  password: 'Tester@1234',
-    lightColor: '#059669', darkColor: '#10b981', initial: 'T' },
-  { role: 'SME',     email: 'sme@testmgmt.io',      password: 'Sme@1234',
-    lightColor: '#7c3aed', darkColor: '#a78bfa', initial: 'S' },
-  { role: 'ADMIN',   email: 'admin@testmgmt.io',    password: 'Admin@1234',
-    lightColor: '#e11d48', darkColor: '#f87171', initial: 'A' },
-];
+import BatLogo from '../data/bajaj.png';
 
 export default function LoginPage() {
   const { login }              = useAuth();
@@ -26,7 +14,7 @@ export default function LoginPage() {
   const [showPwd, setShowPwd]  = useState(false);
   const [error,   setError]    = useState('');
   const [loading, setLoading]  = useState(false);
-  const [demoLoading, setDemoLoading] = useState('');
+  const [idemLoading, setIdemLoading] = useState(false);
 
   const doLogin = async (email, password) => {
     setError('');
@@ -38,21 +26,16 @@ export default function LoginPage() {
       setError(err.response?.data?.message || 'Invalid email or password');
     } finally {
       setLoading(false);
-      setDemoLoading('');
     }
   };
 
   const handleSubmit = (e) => { e.preventDefault(); doLogin(form.email, form.password); };
 
-  const handleDemo = async (acc) => {
-    setDemoLoading(acc.role);
+  const handleIdemLogin = () => {
+    setIdemLoading(true);
     setError('');
-    try {
-      await login(acc.email, acc.password);
-      navigate('/');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Demo login failed');
-    } finally { setDemoLoading(''); }
+    // Redirect to IDEM SSO endpoint
+    window.location.href = '/api/v1/auth/idem/login';
   };
 
   return (
@@ -78,8 +61,8 @@ export default function LoginPage() {
           <div className="login-icon">
             <img src={BatLogo} alt="Brand Logo" width={36} height={36} />
           </div>
-          <h1 className="login-title">SmartQA</h1>
-          <p className="login-sub">Testing Lifecycle Management Platform</p>
+          <h1 className="login-title">Test Genii AI</h1>
+          <p className="login-sub">Intelligent Test Knowledge & Management Platform</p>
         </div>
 
         {/* Error */}
@@ -95,7 +78,7 @@ export default function LoginPage() {
               type="email"
               autoFocus
               autoComplete="email"
-              placeholder="you@testmgmt.io"
+              placeholder="rahul@bajajlife.com"
               value={form.email}
               onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
               required
@@ -126,45 +109,24 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <button type="submit" className="login-btn" disabled={loading}>
+          <button type="submit" className="login-btn" disabled={loading || idemLoading}>
             {loading ? 'Signing in…' : <><Shield size={15} /> Sign In</>}
           </button>
         </form>
 
-        {/* Demo accounts */}
-        <div className="demo-section">
-          <div className="demo-divider">
-            <span>DEMO ACCOUNTS</span>
-          </div>
-          <div className="demo-grid">
-            {DEMO_ACCOUNTS.map(acc => {
-              const color = isDark ? acc.darkColor : acc.lightColor;
-              return (
-                <button
-                  key={acc.role}
-                  className="demo-btn"
-                  disabled={!!demoLoading || loading}
-                  onClick={() => handleDemo(acc)}
-                  style={{ '--demo-color': color }}
-                >
-                  <span
-                    className="demo-avatar"
-                    style={{
-                      background: `${color}22`,
-                      color,
-                    }}
-                  >
-                    {demoLoading === acc.role ? '…' : acc.initial}
-                  </span>
-                  <span className="demo-info">
-                    <span className="demo-role" style={{ color }}>{acc.role}</span>
-                    <span className="demo-email">{acc.email}</span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+        {/* IDEM SSO Divider */}
+        <div className="idem-divider">
+          <span>OR</span>
         </div>
+
+        {/* IDEM Authentication Button */}
+        <button 
+          className="idem-btn" 
+          onClick={handleIdemLogin}
+          disabled={loading || idemLoading}
+        >
+          {idemLoading ? 'Redirecting…' : <><KeyRound size={15} /> Sign in with IDEM</>}
+        </button>
 
         <div className="login-footer">
           {/* Spring Boot 3.2 · React 18 · PostgreSQL 15 */}

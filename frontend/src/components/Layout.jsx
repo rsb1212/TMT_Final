@@ -109,8 +109,8 @@ export default function Layout() {
             <img src={BatLogo} alt="Bat Logo" width={28} height={28} />
           </div>
           <div className="brand-text">
-            <span className="brand-name">RAYU-TMS</span>
-            <span className="brand-tag">Test Management System</span>
+            <span className="brand-name">Test Genii AI</span>
+            <span className="brand-tag">Intelligent Test Knowledge & Management Platform</span>
           </div>
         </div>
 
@@ -182,7 +182,7 @@ export default function Layout() {
 
         {/* Developer credit */}
         <div className="sidebar-credit">
-          Developed by <span>Rahul Bhagat</span>
+          Developed by <span>UAT-Team</span>
         </div>
 
       </aside>

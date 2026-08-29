@@ -1,5 +1,5 @@
 [Unit]
-Description=Test Management Tool Backend - SmartQA
+Description=Test Management Tool Backend - Test Genii AI
 After=network.target postgresql.service
 Wants=postgresql.service
 

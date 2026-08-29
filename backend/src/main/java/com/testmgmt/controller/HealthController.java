@@ -14,13 +14,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Health check endpoint for monitoring and load balancer health checks.
- * SmartQA - Testing Lifecycle Management Platform
+ * Test Genii AI - Intelligent Test Knowledge & Management Platform
  */
 @RestController
 @RequestMapping("/api/v1")
 public class HealthController {
 
-    @Value("${spring.application.name:SmartQA}")
+    @Value("${spring.application.name:Test Genii AI}")
     private String applicationName;
 
     @Value("${server.port:8080}")

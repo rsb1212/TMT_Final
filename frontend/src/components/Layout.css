@@ -1446,6 +1446,7 @@ select option {
   justify-content: space-between; margin-bottom: 24px;
   position: relative; z-index: 1;
 }
+
 .modal-title { 
   font-size: 18px; font-weight: 800; color: var(--text1); 
   letter-spacing: -0.4px;
@@ -1588,4 +1589,3 @@ select option {
 .text-accent { color: var(--accent); }
 .text-muted  { color: var(--text3); }
 .glass-pulse { animation: glassPulse 3s ease-in-out infinite; }
-

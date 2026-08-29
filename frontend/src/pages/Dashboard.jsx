@@ -780,7 +780,7 @@ export default function Dashboard() {
               <div className="card" style={{ marginBottom: 20 }}>
                 <div className="card-header" style={{ background: '#003366', color: 'white', borderRadius: '8px 8px 0 0' }}>
                   <span className="card-title" style={{ color: 'white' }}>
-                    {d?.projectName || 'Project'} : Day 1 - Execution Status
+                    {d?.projectName || 'Project'} - Execution Status
                   </span>
                   <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>
                     {modules.length} modules
@@ -794,8 +794,8 @@ export default function Dashboard() {
                         <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 80, width: 80, verticalAlign: 'middle', padding: '12px 8px' }}>TOTAL TCS</th>
                         <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 100, width: 100, verticalAlign: 'middle', padding: '12px 8px' }}>TOTAL<br/>EXECUTABLE<br/>CASES</th>
                         <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 80, width: 80, verticalAlign: 'middle', padding: '12px 8px' }}>EXECUTED</th>
-                        <th rowSpan={2} style={{ background: '#f57c00', color: 'white', borderRight: '1px solid #e65100', minWidth: 60, width: 60, verticalAlign: 'middle', padding: '12px 8px' }}>PASS</th>
-                        <th rowSpan={2} style={{ background: '#1976d2', color: 'white', borderRight: '1px solid #1565c0', minWidth: 60, width: 60, verticalAlign: 'middle', padding: '12px 8px' }}>FAIL</th>
+                        <th rowSpan={2} style={{ background: '#4caf50', color: 'white', borderRight: '1px solid #388e3c', minWidth: 60, width: 60, verticalAlign: 'middle', padding: '12px 8px' }}>PASS</th>
+                        <th rowSpan={2} style={{ background: '#f44336', color: 'white', borderRight: '1px solid #d32f2f', minWidth: 60, width: 60, verticalAlign: 'middle', padding: '12px 8px' }}>FAIL</th>
                         <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 100, width: 100, verticalAlign: 'middle', padding: '12px 8px' }}>PENDING FOR<br/>EXECUTION</th>
                         <th rowSpan={2} style={{ background: '#1976d2', color: 'white', borderRight: '1px solid #1565c0', minWidth: 110, width: 110, verticalAlign: 'middle', padding: '12px 8px' }}>TEST CASES ON<br/>HOLD DUE TO<br/>OPEN DEFECTS</th>
                         <th rowSpan={2} style={{ background: '#1976d2', color: 'white', borderRight: '1px solid #1565c0', minWidth: 110, width: 110, verticalAlign: 'middle', padding: '12px 8px' }}>COMPLETION %<br/>ON PASSED<br/>TEST CASES</th>
@@ -851,8 +851,8 @@ export default function Dashboard() {
                             <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{total}</td>
                             <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{executableCases}</td>
                             <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{executed}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#fff3e0', color: '#e65100', fontWeight: 700, padding: '12px 8px', verticalAlign: 'middle' }}>{passed}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{failed}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e8f5e9', color: '#2e7d32', fontWeight: 700, padding: '12px 8px', verticalAlign: 'middle' }}>{passed}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#ffebee', color: '#c62828', fontWeight: 700, padding: '12px 8px', verticalAlign: 'middle' }}>{failed}</td>
                             <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{pendingForExecution}</td>
                             <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e3f2fd', padding: '12px 8px', verticalAlign: 'middle' }}>{onHoldDueToDefects}</td>
                             <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e3f2fd', fontWeight: 700, padding: '12px 8px', verticalAlign: 'middle' }}>{completionOnPassed}%</td>
@@ -881,10 +881,10 @@ export default function Dashboard() {
                         <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
                           {modules.reduce((sum, m) => sum + (Number(m.passed) || 0) + (Number(m.failed) || 0), 0)}
                         </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#f57c00', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#4caf50', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
                           {modules.reduce((sum, m) => sum + (Number(m.passed) || 0), 0)}
                         </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
+                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#f44336', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
                           {modules.reduce((sum, m) => sum + (Number(m.failed) || 0), 0)}
                         </td>
                         <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>

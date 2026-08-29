@@ -3,7 +3,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 #                    TEST MANAGEMENT TOOL — DEPLOYMENT SCRIPT
 #                    Target Server: 10.3.41.102
-#                    SmartQA - Testing Lifecycle Management Platform
+#                    Test Genii AI - Intelligent Test Knowledge & Management Platform
 # ═══════════════════════════════════════════════════════════════════════════════
 
 set -e
@@ -23,7 +23,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}═══════════════════════════════════════════════════════════════════════════════${NC}"
-echo -e "${GREEN}                    SmartQA — PRODUCTION DEPLOYMENT${NC}"
+echo -e "${GREEN}                    Test Genii AI — PRODUCTION DEPLOYMENT${NC}"
 echo -e "${GREEN}                    Target: $SERVER_IP${NC}"
 echo -e "${GREEN}                    Time: $(date)${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════════════════════════════════════${NC}"
