@@ -211,6 +211,42 @@ export default function SmeDashboardPage() {
           <ModuleCard key={module.moduleId} module={module} />
         ))}
       </div>
+
+      {/* Test Cases Pending Sign-off List */}
+      {dashboardData?.pendingSignOffCases?.length > 0 && (
+        <div style={{ marginTop: '2.5rem', marginBottom: '1rem' }}>
+          <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
+            <AlertCircle size={20} style={{ marginRight: '0.5rem', color: '#ef4444' }} />
+            Test Cases Pending Sign-off ({dashboardData.pendingSignOffCases.length})
+          </h3>
+          <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div className="table-wrap" style={{ margin: 0, border: 'none' }}>
+              <table style={{ margin: 0 }}>
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Title</th>
+                    <th>Module</th>
+                    <th>Priority</th>
+                    <th>Created At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dashboardData.pendingSignOffCases.map(tc => (
+                    <tr key={tc.id}>
+                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent)' }}>{tc.code}</td>
+                      <td style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tc.title}>{tc.title}</td>
+                      <td style={{ fontSize: 12, color: 'var(--text-3)' }}>{tc.module?.name || '—'}</td>
+                      <td style={{ fontSize: 12 }}>{tc.priority}</td>
+                      <td style={{ fontSize: 12, color: 'var(--text-3)' }}>{new Date(tc.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

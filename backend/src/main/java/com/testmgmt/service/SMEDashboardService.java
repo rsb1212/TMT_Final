@@ -4,6 +4,7 @@ import com.testmgmt.dto.response.ResponseDTOs.*;
 import com.testmgmt.entity.Module;
 import com.testmgmt.entity.Project;
 import com.testmgmt.entity.SmeModuleAssignment;
+import com.testmgmt.entity.TestCase;
 import com.testmgmt.entity.User;
 import com.testmgmt.enums.TestStatus;
 import com.testmgmt.enums.UserRole;
@@ -14,6 +15,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.testmgmt.service.TestCaseService;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -155,6 +157,7 @@ public class SMEDashboardService {
                     .totalReviewed(0)
                     .totalSignedOff(0)
                     .overallCompletionPercentage(0)
+                    .pendingSignOffCases(Collections.emptyList())
                     .build();
         }
 
@@ -215,6 +218,11 @@ public class SMEDashboardService {
         double overallCompletion = totalTestCases > 0 
             ? ((double) totalSignedOff / totalTestCases) * 100 : 0;
 
+        List<TestCaseResponse> pendingSignOffCases = testCaseRepository
+                .findPendingSignOffByModuleIds(moduleIds, smeId).stream()
+                .map(TestCaseService::toResponse)
+                .collect(Collectors.toList());
+
         return SmeModuleDashboardResponse.builder()
                 .smeId(smeId)
                 .smeName(sme.getFullName())
@@ -226,6 +234,7 @@ public class SMEDashboardService {
                 .totalReviewed((int) totalReviewed)
                 .totalSignedOff((int) totalSignedOff)
                 .overallCompletionPercentage(Math.round(overallCompletion * 100.0) / 100.0)
+                .pendingSignOffCases(pendingSignOffCases)
                 .build();
     }
 

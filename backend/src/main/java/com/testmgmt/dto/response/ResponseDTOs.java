@@ -363,6 +363,7 @@ public class ResponseDTOs {
         private int                   totalReviewed;
         private int                   totalSignedOff;
         private double                overallCompletionPercentage;
+        private List<TestCaseResponse> pendingSignOffCases;
     }
 
     @Data @Builder
