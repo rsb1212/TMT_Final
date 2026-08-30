@@ -304,7 +304,7 @@ function TreeNode({ node, level = 0, selectedPath, onSelect, moduleColor, expand
 // MODULE PANEL COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 
-function ModulePanel({ module, selectedPath, onSelect, expandedNodes, toggleExpand, isExpanded, onToggleModule, isAdmin }) {
+function ModulePanel({ module, selectedPath, onSelect, expandedNodes, toggleExpand, isExpanded, onToggleModule, isAdmin, onAddCategory }) {
   return (
     <div style={{
       background: 'var(--bg-card)',
@@ -362,6 +362,7 @@ function ModulePanel({ module, selectedPath, onSelect, expandedNodes, toggleExpa
           {/* Add New Category Button */}
           {isAdmin && (
             <div
+              onClick={() => onAddCategory && onAddCategory(module.id, module.name)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -802,6 +803,12 @@ export default function RepositoryPage() {
               isExpanded={expandedModules.has(module.id)}
               onToggleModule={toggleModule}
               isAdmin={isAdmin}
+              onAddCategory={(moduleId, moduleName) => {
+                setAddToParentId(moduleId);
+                setAddToParentName(moduleName);
+                setNewModuleName('');
+                setShowAddModal(true);
+              }}
             />
           ))}
 
