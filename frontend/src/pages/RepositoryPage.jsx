@@ -5,7 +5,7 @@ import {
   FolderOpen, Upload, Download, Trash2, Archive,
   FileText, FileSpreadsheet, File, Image, X,
   RefreshCw, Search, Plus, ChevronDown, ChevronRight,
-  Database, Server, GitBranch, Shield, Folder, Package
+  Database, Server, GitBranch, Shield, Folder, Package, FolderUp
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -420,12 +420,15 @@ export default function RepositoryPage() {
   const [addToParentId, setAddToParentId] = useState('');
   const [addToParentName, setAddToParentName] = useState('');
 
-  // Upload form state
-  const [uploadFile, setUploadFile] = useState(null);
+  // Upload form state — multi-file support
+  const [uploadFiles, setUploadFiles] = useState([]);  // array of { file, relativePath }
   const [uploadCat, setUploadCat] = useState('');
   const [uploadDesc, setUploadDesc] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef();
+  const folderInputRef = useRef();
 
   const showMsg = (type, text) => {
     setMsg({ type, text });
@@ -654,23 +657,61 @@ export default function RepositoryPage() {
     }
   };
 
+  // --- Multi-file / folder helpers ---
+  const addFiles = (fileList, isFolder = false) => {
+    const newEntries = Array.from(fileList).map(f => ({
+      file: f,
+      relativePath: isFolder ? (f.webkitRelativePath || f.name) : null,
+    }));
+    setUploadFiles(prev => [...prev, ...newEntries]);
+  };
+
+  const removeFile = (index) => {
+    setUploadFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const totalSize = uploadFiles.reduce((sum, e) => sum + (e.file.size || 0), 0);
+
+  // Drag-and-drop handlers
+  const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = (e) => { e.preventDefault(); setIsDragging(false); };
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+  };
+
   const handleUpload = async () => {
-    if (!uploadFile || !uploadCat) {
-      showMsg('error', 'Please select a file and category');
+    if (uploadFiles.length === 0 || !uploadCat) {
+      showMsg('error', 'Please select file(s) and a category');
       return;
     }
     setUploading(true);
+    setUploadProgress(0);
     try {
       const fd = new FormData();
-      fd.append('file', uploadFile);
+      uploadFiles.forEach(entry => fd.append('files', entry.file));
       fd.append('category', uploadCat);
       if (uploadDesc) fd.append('description', uploadDesc);
-      await repositoryApi.upload(selectedProj, fd);
-      showMsg('success', `"${uploadFile.name}" uploaded successfully`);
+
+      // Include relative paths if any file has one (folder upload)
+      const hasRelPaths = uploadFiles.some(e => e.relativePath);
+      if (hasRelPaths) {
+        const paths = uploadFiles.map(e => e.relativePath || e.file.name);
+        fd.append('relativePaths', JSON.stringify(paths));
+      }
+
+      await repositoryApi.uploadMultiple(selectedProj, fd, (progressEvent) => {
+        const pct = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+        setUploadProgress(pct);
+      });
+
+      showMsg('success', `${uploadFiles.length} file(s) uploaded successfully`);
       setShowUpload(false);
-      setUploadFile(null);
+      setUploadFiles([]);
       setUploadCat('');
       setUploadDesc('');
+      setUploadProgress(0);
       load();
     } catch (err) {
       showMsg('error', err.response?.data?.message || 'Upload failed');
@@ -1005,8 +1046,10 @@ export default function RepositoryPage() {
             background: 'var(--bg-card)',
             borderRadius: 16,
             padding: 28,
-            width: 500,
+            width: 580,
             maxWidth: '95vw',
+            maxHeight: '90vh',
+            overflowY: 'auto',
             border: '1px solid var(--border)',
             boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
           }}>
@@ -1015,7 +1058,7 @@ export default function RepositoryPage() {
                 <Upload size={20} color={currentModule.color} />
                 <h3 style={{ margin: 0, fontSize: 18 }}>Upload to {selectedName}</h3>
               </div>
-              <button onClick={() => setShowUpload(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)' }}>
+              <button onClick={() => { setShowUpload(false); setUploadFiles([]); setUploadProgress(0); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)' }}>
                 <X size={20} />
               </button>
             </div>
@@ -1043,7 +1086,7 @@ export default function RepositoryPage() {
               <textarea
                 value={uploadDesc}
                 onChange={e => setUploadDesc(e.target.value)}
-                rows={3}
+                rows={2}
                 placeholder="Optional description…"
                 style={{
                   width: '100%', padding: '10px 14px', borderRadius: 8,
@@ -1053,49 +1096,162 @@ export default function RepositoryPage() {
               />
             </div>
 
-            {/* File */}
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>File *</label>
+            {/* Drop Zone */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: 'var(--text2)', fontWeight: 500 }}>
+                Files *
+              </label>
               <div
-                onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
                 style={{
-                  border: `2px dashed ${uploadFile ? currentModule.color : 'var(--border)'}`,
+                  border: `2px dashed ${isDragging ? currentModule.color : uploadFiles.length > 0 ? currentModule.color : 'var(--border)'}`,
                   borderRadius: 10,
                   padding: 24,
                   textAlign: 'center',
                   cursor: 'pointer',
-                  color: uploadFile ? currentModule.color : 'var(--text3)',
+                  color: isDragging ? currentModule.color : uploadFiles.length > 0 ? currentModule.color : 'var(--text3)',
                   fontSize: 14,
-                  background: uploadFile ? `${currentModule.color}08` : 'var(--bg-raised)',
+                  background: isDragging ? `${currentModule.color}12` : uploadFiles.length > 0 ? `${currentModule.color}08` : 'var(--bg-raised)',
                   transition: 'all 0.2s',
                 }}
               >
-                {uploadFile ? (
-                  <div>
-                    <FileText size={28} style={{ marginBottom: 8 }} />
-                    <div style={{ fontWeight: 500 }}>{uploadFile.name}</div>
-                    <div style={{ fontSize: 12, opacity: 0.7 }}>{formatBytes(uploadFile.size)}</div>
-                  </div>
-                ) : (
-                  <div>
-                    <Upload size={28} style={{ marginBottom: 8, opacity: 0.5 }} />
-                    <div>Click to select file</div>
-                    <div style={{ fontSize: 11, marginTop: 4 }}>Supports: PDF, Excel, Word, Images, ZIP</div>
-                  </div>
-                )}
+                <Upload size={28} style={{ marginBottom: 8, opacity: 0.5 }} />
+                <div style={{ marginBottom: 8 }}>Drag & drop files here</div>
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}
+                  >
+                    <Upload size={13} /> Upload Files
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={(e) => { e.stopPropagation(); folderInputRef.current?.click(); }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}
+                  >
+                    <FolderUp size={13} /> Upload Folder
+                  </button>
+                </div>
+                <div style={{ fontSize: 11, marginTop: 8, opacity: 0.6 }}>Supports: PDF, Excel, Word, Images, ZIP — Multiple files or entire folders</div>
               </div>
-              <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={e => setUploadFile(e.target.files[0] || null)} />
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                style={{ display: 'none' }}
+                onChange={e => { if (e.target.files?.length) { addFiles(e.target.files); e.target.value = ''; } }}
+              />
+              <input
+                ref={folderInputRef}
+                type="file"
+                webkitdirectory=""
+                directory=""
+                multiple
+                style={{ display: 'none' }}
+                onChange={e => { if (e.target.files?.length) { addFiles(e.target.files, true); e.target.value = ''; } }}
+              />
             </div>
 
+            {/* File List */}
+            {uploadFiles.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, color: 'var(--text2)', fontWeight: 600 }}>
+                    {uploadFiles.length} file{uploadFiles.length !== 1 ? 's' : ''} selected
+                    <span style={{ fontWeight: 400, color: 'var(--text3)', marginLeft: 6 }}>({formatBytes(totalSize)})</span>
+                  </span>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setUploadFiles([])}
+                    style={{ fontSize: 11, padding: '2px 8px' }}
+                  >
+                    Clear all
+                  </button>
+                </div>
+                <div style={{
+                  maxHeight: 180,
+                  overflowY: 'auto',
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  background: 'var(--bg-raised)',
+                }}>
+                  {uploadFiles.map((entry, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '6px 10px',
+                        borderBottom: idx < uploadFiles.length - 1 ? '1px solid var(--border)' : 'none',
+                        fontSize: 12,
+                      }}
+                    >
+                      <span style={{ color: currentModule.color, flexShrink: 0 }}>
+                        {fileIcon(entry.file.type)}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 500, color: 'var(--text1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {entry.file.name}
+                        </div>
+                        {entry.relativePath && (
+                          <div style={{ fontSize: 10, color: 'var(--text3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {entry.relativePath}
+                          </div>
+                        )}
+                      </div>
+                      <span style={{ fontSize: 11, color: 'var(--text3)', flexShrink: 0 }}>{formatBytes(entry.file.size)}</span>
+                      <button
+                        onClick={() => removeFile(idx)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 2, flexShrink: 0 }}
+                        title="Remove"
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Upload Progress */}
+            {uploading && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4, color: 'var(--text2)' }}>
+                  <span>Uploading…</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div style={{
+                  height: 6,
+                  borderRadius: 3,
+                  background: 'var(--bg-raised)',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${uploadProgress}%`,
+                    background: `linear-gradient(90deg, ${currentModule.color}, ${currentModule.color}cc)`,
+                    borderRadius: 3,
+                    transition: 'width 0.3s ease',
+                  }} />
+                </div>
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <button className="btn btn-secondary" onClick={() => setShowUpload(false)} disabled={uploading}>Cancel</button>
+              <button className="btn btn-secondary" onClick={() => { setShowUpload(false); setUploadFiles([]); setUploadProgress(0); }} disabled={uploading}>Cancel</button>
               <button
                 className="btn btn-primary"
                 onClick={handleUpload}
-                disabled={uploading || !uploadFile || !uploadCat}
+                disabled={uploading || uploadFiles.length === 0 || !uploadCat}
                 style={{ display: 'flex', alignItems: 'center', gap: 6, background: currentModule.color }}
               >
-                {uploading ? 'Uploading…' : <><Upload size={14} /> Upload</>}
+                {uploading ? `Uploading… ${uploadProgress}%` : <><Upload size={14} /> Upload {uploadFiles.length > 0 ? `(${uploadFiles.length})` : ''}</>}
               </button>
             </div>
           </div>
