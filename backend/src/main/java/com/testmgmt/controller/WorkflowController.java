@@ -111,7 +111,7 @@ public class WorkflowController {
 
     /* ── SME Review Queue ────────────────────────────── */
     @GetMapping("/sme-queue")
-    @PreAuthorize("hasRole('SME')")
+    @PreAuthorize("hasAnyRole('SME','MANAGER','ADMIN')")
     public ResponseEntity<ApiResponse<List<TestCaseResponse>>> smeQueue(
             @RequestParam(required = false) UUID projectId) {
         return ResponseEntity.ok(ApiResponse.success(workflowService.getSMEQueue(projectId)));

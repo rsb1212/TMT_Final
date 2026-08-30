@@ -1,3 +1,7 @@
+# ── TMT Application Configuration ──────────────────────────────────────────
+# Copy this file to application.properties and fill in the values.
+# NEVER commit the real application.properties to version control.
+
 spring.application.name=test-management-tool
 server.port=${SERVER_PORT:8080}
 
@@ -14,7 +18,8 @@ spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=${JPA_SHOW_SQL:false}
 spring.jpa.properties.hibernate.format_sql=true
 
-# JWT
+# JWT — REQUIRED: Set JWT_SECRET env var with a 256-bit Base64 key
+# Generate one with: openssl rand -base64 64
 app.jwt.secret=${JWT_SECRET:}
 app.jwt.expiration=${JWT_EXPIRATION:7200000}
 
@@ -34,12 +39,11 @@ logging.level.org.springframework.security=${SECURITY_LOG_LEVEL:INFO}
 # Cache
 spring.cache.type=simple
 
-# Multipart (for Excel uploads)
+# Multipart (for file uploads)
 spring.servlet.multipart.max-file-size=${MAX_FILE_SIZE:100MB}
 spring.servlet.multipart.max-request-size=${MAX_REQUEST_SIZE:500MB}
 
-# ── JIRA Integration (Optional) ──────────────────────────────────────────────
-# Set JIRA_ENABLED=true in environment to activate JIRA sync
+# JIRA Integration (Optional)
 jira.enabled=${JIRA_ENABLED:false}
 jira.base-url=${JIRA_BASE_URL:}
 jira.email=${JIRA_EMAIL:}
@@ -53,8 +57,7 @@ app.upload.dir=${UPLOAD_DIR:./uploads}
 # CORS Configuration
 app.cors.allowed-origins=${CORS_ALLOWED_ORIGINS:http://localhost:3000}
 
-# ── Default Admin Configuration (Optional) ───────────────────────────────────
-# Set DEFAULT_ADMIN_ENABLED=true in environment to auto-create admin on startup
+# Default Admin Configuration (Optional)
 app.default-admin.enabled=${DEFAULT_ADMIN_ENABLED:false}
 app.default-admin.email=${DEFAULT_ADMIN_EMAIL:}
 app.default-admin.username=${DEFAULT_ADMIN_USERNAME:admin}

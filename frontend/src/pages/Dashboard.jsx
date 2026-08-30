@@ -5,19 +5,21 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { RefreshCw, ChevronDown, ChevronRight, Download, CheckCircle2,
+import {
+  RefreshCw, ChevronDown, ChevronRight, Download, CheckCircle2,
   XCircle, Clock, AlertTriangle, BarChart2, Activity, Shield, Users,
-  Building2, UserCheck, FileText, ArrowRight, Mail, Phone, PanelLeftClose, PanelLeft } from 'lucide-react';
+  Building2, UserCheck, FileText, ArrowRight, Mail, Phone, PanelLeftClose, PanelLeft
+} from 'lucide-react';
 
 const S = {
-  Pass:        { color: '#00e676', bg: 'rgba(0,230,118,0.12)'   },
-  Fail:        { color: '#ff5252', bg: 'rgba(255,82,82,0.12)'   },
-  InProgress:  { color: '#ffb74d', bg: 'rgba(255,183,77,0.12)'  },
-  NA:          { color: '#ffd740', bg: 'rgba(255,215,64,0.12)'  },
+  Pass: { color: '#00e676', bg: 'rgba(0,230,118,0.12)' },
+  Fail: { color: '#ff5252', bg: 'rgba(255,82,82,0.12)' },
+  InProgress: { color: '#ffb74d', bg: 'rgba(255,183,77,0.12)' },
+  NA: { color: '#ffd740', bg: 'rgba(255,215,64,0.12)' },
   NotReleased: { color: '#c084fc', bg: 'rgba(192,132,252,0.12)' },
-  Defect:      { color: '#ff9800', bg: 'rgba(255,152,0,0.12)'   },
-  Assigned:    { color: '#00d4ff', bg: 'rgba(0,212,255,0.12)'   },
-  Draft:       { color: '#8899aa', bg: 'rgba(136,153,170,0.12)' },
+  Defect: { color: '#ff9800', bg: 'rgba(255,152,0,0.12)' },
+  Assigned: { color: '#00d4ff', bg: 'rgba(0,212,255,0.12)' },
+  Draft: { color: '#8899aa', bg: 'rgba(136,153,170,0.12)' },
 };
 
 const DEPARTMENT_COLORS = [
@@ -34,14 +36,18 @@ function StatTile({ label, value, color, bg, icon: Icon, subtitle, onClick }) {
       transition: 'transform 0.15s, box-shadow 0.15s',
       cursor: onClick ? 'pointer' : 'default',
     }}
-      onMouseEnter={e => { if (onClick) { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 6px 20px rgba(0,0,0,0.2)'; } }}
-      onMouseLeave={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=''; }}
+      onMouseEnter={e => { if (onClick) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.2)'; } }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
     >
       {Icon && <Icon size={16} style={{ color, marginBottom: 6, opacity: 0.8 }} />}
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 24,
-        fontWeight: 700, color: color || 'var(--accent)', lineHeight: 1 }}>{value ?? '—'}</div>
-      <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 5,
-        textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
+      <div style={{
+        fontFamily: 'var(--font-mono)', fontSize: 24,
+        fontWeight: 700, color: color || 'var(--accent)', lineHeight: 1
+      }}>{value ?? '—'}</div>
+      <div style={{
+        fontSize: 10, color: 'var(--text3)', marginTop: 5,
+        textTransform: 'uppercase', letterSpacing: '0.6px'
+      }}>{label}</div>
       {subtitle && <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 2 }}>{subtitle}</div>}
     </div>
   );
@@ -90,8 +96,10 @@ function ProjectTree({ projects, selectedId, onSelect }) {
                 ? (expanded[p.id] ? <ChevronDown size={12} /> : <ChevronRight size={12} />)
                 : <span style={{ width: 12 }} />}
             </span>
-            <span style={{ fontWeight: p.parentProjectId ? 400 : 600,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+            <span style={{
+              fontWeight: p.parentProjectId ? 400 : 600,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+            }}>{p.name}</span>
           </div>
           {expanded[p.id] && p.subProjects?.length > 0 && (
             <div style={{ marginLeft: 18, borderLeft: '2px solid var(--border)', paddingLeft: 4 }}>
@@ -151,7 +159,7 @@ function DepartmentCard({ dept, color, expanded, onToggle }) {
             <div style={{ fontSize: 9, color: 'var(--text3)', textTransform: 'uppercase' }}>Total</div>
           </div>
           {expanded ? <ChevronDown size={16} style={{ color: 'var(--text3)' }} />
-                    : <ChevronRight size={16} style={{ color: 'var(--text3)' }} />}
+            : <ChevronRight size={16} style={{ color: 'var(--text3)' }} />}
         </div>
       </div>
 
@@ -207,8 +215,10 @@ function DepartmentCard({ dept, color, expanded, onToggle }) {
           {/* SME Users */}
           {dept.smeUsers?.length > 0 && (
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2)',
-                textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+              <div style={{
+                fontSize: 11, fontWeight: 700, color: 'var(--text2)',
+                textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8
+              }}>
                 <Users size={11} style={{ marginRight: 4, verticalAlign: 'middle' }} />
                 SME Assignees
               </div>
@@ -272,20 +282,20 @@ function DepartmentCard({ dept, color, expanded, onToggle }) {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [projects,        setProjects]        = useState([]);
+  const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
-  const [dashboard,       setDashboard]       = useState(null);
-  const [modules,         setModules]         = useState([]);
-  const [defects,         setDefects]         = useState([]);
-  const [loading,         setLoading]         = useState(false);
-  const [smeData,         setSmeData]         = useState(null);
-  const [expandedDepts,   setExpandedDepts]   = useState({});
-  const [smeView,         setSmeView]         = useState('departments'); // 'departments' | 'summary'
+  const [dashboard, setDashboard] = useState(null);
+  const [modules, setModules] = useState([]);
+  const [defects, setDefects] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [smeData, setSmeData] = useState(null);
+  const [expandedDepts, setExpandedDepts] = useState({});
+  const [smeView, setSmeView] = useState('departments'); // 'departments' | 'summary'
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // Sidebar collapse state
 
-  const isSME     = user?.role === 'SME';
+  const isSME = user?.role === 'SME';
   const isManager = ['MANAGER', 'ADMIN'].includes(user?.role);
-  const isTester  = user?.role === 'TESTER';
+  const isTester = user?.role === 'TESTER';
 
   // Load project list on mount
   useEffect(() => {
@@ -351,29 +361,29 @@ export default function Dashboard() {
   const d = dashboard;
 
   // ── Derived metrics ──────────────────────────────────────────
-  const totalExecuted   = d ? Number(d.passed) + Number(d.failed) + Number(d.defectRaised) : 0;
-  const executionPct    = d && d.totalTestCases > 0
+  const totalExecuted = d ? Number(d.passed) + Number(d.failed) + Number(d.defectRaised) : 0;
+  const executionPct = d && d.totalTestCases > 0
     ? Math.round((totalExecuted / d.totalTestCases) * 100) : 0;
-  const passPct         = d?.passRate ?? 0;
+  const passPct = d?.passRate ?? 0;
   const { openDefects, criticalDefects, pieData, barData } = useMemo(() => {
-    const openDefects     = defects.filter(df => ['NEW','OPEN','IN_PROGRESS'].includes(df.status)).length;
+    const openDefects = defects.filter(df => ['NEW', 'OPEN', 'IN_PROGRESS'].includes(df.status)).length;
     const criticalDefects = defects.filter(df => df.severity === 'CRITICAL').length;
     const pieData = d ? [
-      { name: 'Pass',         value: Number(d.passed),       color: S.Pass.color },
-      { name: 'Fail',         value: Number(d.failed),       color: S.Fail.color },
-      { name: 'In Progress',  value: Number(d.inProgress),   color: S.InProgress.color },
-      { name: 'NA',           value: Number(d.naCount),      color: S.NA.color },
-      { name: 'Not Released', value: Number(d.notReleased),  color: S.NotReleased.color },
-      { name: 'Defect',       value: Number(d.defectRaised), color: S.Defect.color },
-      { name: 'Assigned',     value: Number(d.assigned),     color: S.Assigned.color },
-      { name: 'Draft',        value: Number(d.draft),        color: S.Draft.color },
+      { name: 'Pass', value: Number(d.passed), color: S.Pass.color },
+      { name: 'Fail', value: Number(d.failed), color: S.Fail.color },
+      { name: 'In Progress', value: Number(d.inProgress), color: S.InProgress.color },
+      { name: 'NA', value: Number(d.naCount), color: S.NA.color },
+      { name: 'Not Released', value: Number(d.notReleased), color: S.NotReleased.color },
+      { name: 'Defect', value: Number(d.defectRaised), color: S.Defect.color },
+      { name: 'Assigned', value: Number(d.assigned), color: S.Assigned.color },
+      { name: 'Draft', value: Number(d.draft), color: S.Draft.color },
     ].filter(x => x.value > 0) : [];
     const barData = modules.slice(0, 14).map(m => ({
-      name:      m.moduleName.length > 16 ? m.moduleName.slice(0, 14) + '…' : m.moduleName,
-      Pass:      Number(m.passed),
-      Fail:      Number(m.failed),
+      name: m.moduleName.length > 16 ? m.moduleName.slice(0, 14) + '…' : m.moduleName,
+      Pass: Number(m.passed),
+      Fail: Number(m.failed),
       'In Prog': Number(m.inProgress),
-      NA:        Number(m.naCount),
+      NA: Number(m.naCount),
       'Not Rel': Number(m.notReleased),
     }));
     return { openDefects, criticalDefects, pieData, barData };
@@ -421,7 +431,7 @@ export default function Dashboard() {
   }, [smeData]);
 
   // ── Page titles ─────────────────────────────────────────────
-  const pageTitle    = isSME ? 'SME Review Dashboard' : isManager ? 'Manager Dashboard' : 'Project Status';
+  const pageTitle = isSME ? 'SME Review Dashboard' : isManager ? 'Manager Dashboard' : 'Project Status';
   const pageSubtitle = isSME
     ? 'Department-wise test case bifurcation and review metrics'
     : isTester ? 'Your project execution status' : 'Real-time project test metrics';
@@ -429,22 +439,22 @@ export default function Dashboard() {
   // ── SME Tab buttons ─────────────────────────────────────────
   const tabs = isSME ? [
     { key: 'departments', label: 'Departments', icon: Building2 },
-    { key: 'summary',     label: 'Summary',     icon: BarChart2 },
+    { key: 'summary', label: 'Summary', icon: BarChart2 },
   ] : [];
 
   return (
     <div style={{ display: 'flex', gap: 20 }}>
 
       {/* ── Project tree sidebar ─────────────────────── */}
-      <div style={{ 
-        width: sidebarCollapsed ? 40 : 210, 
+      <div style={{
+        width: sidebarCollapsed ? 40 : 210,
         flexShrink: 0,
         transition: 'width 0.2s ease-in-out'
       }}>
         <div className="card" style={{ position: 'sticky', top: 20 }}>
           <div className="card-header" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             {!sidebarCollapsed && <span className="card-title" style={{ fontSize: 11 }}>PROJECTS</span>}
-            <button 
+            <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               style={{
                 background: 'none',
@@ -528,15 +538,19 @@ export default function Dashboard() {
               </div>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, textAlign: 'center' }}>
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#8b5cf6',
-                    fontFamily: 'var(--font-mono)' }}>{smeData.totalSmeApproved}</div>
+                  <div style={{
+                    fontSize: 18, fontWeight: 700, color: '#8b5cf6',
+                    fontFamily: 'var(--font-mono)'
+                  }}>{smeData.totalSmeApproved}</div>
                   <div style={{ fontSize: 9, color: 'var(--text3)', textTransform: 'uppercase' }}>
                     Approved
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#d29922',
-                    fontFamily: 'var(--font-mono)' }}>{smeData.totalPendingReview}</div>
+                  <div style={{
+                    fontSize: 18, fontWeight: 700, color: '#d29922',
+                    fontFamily: 'var(--font-mono)'
+                  }}>{smeData.totalPendingReview}</div>
                   <div style={{ fontSize: 9, color: 'var(--text3)', textTransform: 'uppercase' }}>
                     Pending
                   </div>
@@ -572,9 +586,9 @@ export default function Dashboard() {
                 {/* Summary stat cards */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
                   <StatTile label="Total Departments" value={smeData.departmentSummaries.length} color="#8b5cf6" icon={Building2} />
-                  <StatTile label="Total Cases"       value={smeData.totalAllCases}          color="var(--accent)" icon={FileText} />
-                  <StatTile label="Pending Review"    value={smeData.totalPendingReview}     color="#d29922"       icon={Clock} />
-                  <StatTile label="SME Approved"      value={smeData.totalSmeApproved}       color="#bc8cff"       icon={CheckCircle2} />
+                  <StatTile label="Total Cases" value={smeData.totalAllCases} color="var(--accent)" icon={FileText} />
+                  <StatTile label="Pending Review" value={smeData.totalPendingReview} color="#d29922" icon={Clock} />
+                  <StatTile label="SME Approved" value={smeData.totalSmeApproved} color="#bc8cff" icon={CheckCircle2} />
                 </div>
 
                 {/* Department cards grid */}
@@ -619,8 +633,10 @@ export default function Dashboard() {
                             innerRadius={55} outerRadius={90} paddingAngle={2} dataKey="value">
                             {deptPieData.map((e, i) => <Cell key={e.name || i} fill={e.color} />)}
                           </Pie>
-                          <Tooltip contentStyle={{ background: 'var(--bg-raised)',
-                            border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
+                          <Tooltip contentStyle={{
+                            background: 'var(--bg-raised)',
+                            border: '1px solid var(--border)', borderRadius: 8, fontSize: 12
+                          }}
                             formatter={(v, n) => [`${v} TCs`, n]} />
                           <Legend wrapperStyle={{ fontSize: 11 }} />
                         </PieChart>
@@ -644,12 +660,14 @@ export default function Dashboard() {
                           <XAxis type="number" tick={{ fill: 'var(--text3)', fontSize: 10 }} />
                           <YAxis type="category" dataKey="name" width={100}
                             tick={{ fill: 'var(--text2)', fontSize: 10 }} />
-                          <Tooltip contentStyle={{ background: 'var(--bg-raised)',
-                            border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
+                          <Tooltip contentStyle={{
+                            background: 'var(--bg-raised)',
+                            border: '1px solid var(--border)', borderRadius: 8, fontSize: 12
+                          }} />
                           <Bar dataKey="Pending Review" stackId="a" fill="#d29922" />
-                          <Bar dataKey="SME Approved"   stackId="a" fill="#bc8cff" />
-                          <Bar dataKey="Draft"          stackId="a" fill="#8899aa" />
-                          <Bar dataKey="In Progress"    stackId="a" fill="#00d4ff" />
+                          <Bar dataKey="SME Approved" stackId="a" fill="#bc8cff" />
+                          <Bar dataKey="Draft" stackId="a" fill="#8899aa" />
+                          <Bar dataKey="In Progress" stackId="a" fill="#00d4ff" />
                         </BarChart>
                       </ResponsiveContainer>
                     ) : (
@@ -697,16 +715,22 @@ export default function Dashboard() {
                             <td style={{ fontFamily: 'var(--font-mono)', color: '#f85149' }}>{dept.failed}</td>
                             <td>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <div style={{ flex: 1, height: 6, background: 'var(--bg-deep)',
-                                  borderRadius: 3, overflow: 'hidden', minWidth: 50 }}>
-                                  <div style={{ height: '100%', borderRadius: 3,
+                                <div style={{
+                                  flex: 1, height: 6, background: 'var(--bg-deep)',
+                                  borderRadius: 3, overflow: 'hidden', minWidth: 50
+                                }}>
+                                  <div style={{
+                                    height: '100%', borderRadius: 3,
                                     width: `${dept.passRate}%`,
                                     background: dept.passRate >= 80 ? '#3fb950'
-                                      : dept.passRate >= 60 ? '#d29922' : '#f85149' }} />
+                                      : dept.passRate >= 60 ? '#d29922' : '#f85149'
+                                  }} />
                                 </div>
-                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
+                                <span style={{
+                                  fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 700,
                                   color: dept.passRate >= 80 ? '#3fb950'
-                                    : dept.passRate >= 60 ? '#d29922' : '#f85149' }}>
+                                    : dept.passRate >= 60 ? '#d29922' : '#f85149'
+                                }}>
                                   {dept.passRate}%
                                 </span>
                               </div>
@@ -777,42 +801,34 @@ export default function Dashboard() {
           <>
             {/* ── Module Execution Status Table (Excel-style) - MOVED TO TOP ─────────────────────── */}
             {modules.length > 0 && (
-              <div className="card" style={{ marginBottom: 20 }}>
-                <div className="card-header" style={{ background: '#003366', color: 'white', borderRadius: '8px 8px 0 0' }}>
-                  <span className="card-title" style={{ color: 'white' }}>
-                    {d?.projectName || 'Project'} - Execution Status
-                  </span>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>
-                    {modules.length} modules
-                  </span>
-                </div>
-                <div className="table-wrap" style={{ overflowX: 'auto' }}>
-                  <table style={{ fontSize: 12, minWidth: 1600, borderCollapse: 'collapse' }}>
+              <div style={{ marginBottom: 20, width: '100%', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)', background: 'var(--bg-card)', padding: '5px 0' }}>
+                <div className="table-wrap" style={{ overflowX: 'auto', width: '100%' }}>
+                  <table style={{ fontSize: 13, minWidth: 1600, borderCollapse: 'collapse' }}>
                     <thead>
                       <tr style={{ background: '#003366', color: 'white', height: 50 }}>
                         <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 120, width: 120, verticalAlign: 'middle', padding: '12px 8px' }}>MODULE</th>
                         <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 80, width: 80, verticalAlign: 'middle', padding: '12px 8px' }}>TOTAL TCS</th>
-                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 100, width: 100, verticalAlign: 'middle', padding: '12px 8px' }}>TOTAL<br/>EXECUTABLE<br/>CASES</th>
+                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 100, width: 100, verticalAlign: 'middle', padding: '12px 8px' }}>TOTAL<br />EXECUTABLE<br />CASES</th>
                         <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 80, width: 80, verticalAlign: 'middle', padding: '12px 8px' }}>EXECUTED</th>
                         <th rowSpan={2} style={{ background: '#4caf50', color: 'white', borderRight: '1px solid #388e3c', minWidth: 60, width: 60, verticalAlign: 'middle', padding: '12px 8px' }}>PASS</th>
                         <th rowSpan={2} style={{ background: '#f44336', color: 'white', borderRight: '1px solid #d32f2f', minWidth: 60, width: 60, verticalAlign: 'middle', padding: '12px 8px' }}>FAIL</th>
-                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 100, width: 100, verticalAlign: 'middle', padding: '12px 8px' }}>PENDING FOR<br/>EXECUTION</th>
-                        <th rowSpan={2} style={{ background: '#1976d2', color: 'white', borderRight: '1px solid #1565c0', minWidth: 110, width: 110, verticalAlign: 'middle', padding: '12px 8px' }}>TEST CASES ON<br/>HOLD DUE TO<br/>OPEN DEFECTS</th>
-                        <th rowSpan={2} style={{ background: '#1976d2', color: 'white', borderRight: '1px solid #1565c0', minWidth: 110, width: 110, verticalAlign: 'middle', padding: '12px 8px' }}>COMPLETION %<br/>ON PASSED<br/>TEST CASES</th>
-                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 70, width: 70, verticalAlign: 'middle', padding: '12px 8px' }}>RELEASE<br/>REQ</th>
+                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 100, width: 100, verticalAlign: 'middle', padding: '12px 8px' }}>PENDING FOR<br />EXECUTION</th>
+                        <th rowSpan={2} style={{ background: '#1976d2', color: 'white', borderRight: '1px solid #1565c0', minWidth: 110, width: 110, verticalAlign: 'middle', padding: '12px 8px' }}>TEST CASES ON<br />HOLD DUE TO<br />OPEN DEFECTS</th>
+                        <th rowSpan={2} style={{ background: '#1976d2', color: 'white', borderRight: '1px solid #1565c0', minWidth: 110, width: 110, verticalAlign: 'middle', padding: '12px 8px' }}>COMPLETION %<br />ON PASSED<br />TEST CASES</th>
+                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 70, width: 70, verticalAlign: 'middle', padding: '12px 8px' }}>RELEASE<br />REQ</th>
                         <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 50, width: 50, verticalAlign: 'middle', padding: '12px 8px' }}>NA</th>
-                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 80, width: 80, verticalAlign: 'middle', padding: '12px 8px' }}>NOT<br/>RELEASED</th>
+                        <th rowSpan={2} style={{ background: '#003366', color: 'white', borderRight: '1px solid #004080', minWidth: 80, width: 80, verticalAlign: 'middle', padding: '12px 8px' }}>NOT<br />RELEASED</th>
                         <th colSpan={4} style={{ background: '#4caf50', color: 'white', textAlign: 'center', borderRight: '1px solid #388e3c', borderBottom: '1px solid #2e7d32', padding: '10px 8px' }}>AUTOMATION</th>
                         <th colSpan={3} style={{ background: '#003366', color: 'white', textAlign: 'center', borderBottom: '1px solid #004080', padding: '10px 8px' }}>MANUAL</th>
                       </tr>
                       <tr style={{ background: '#004080', color: 'white', height: 45 }}>
-                        <th style={{ background: '#4caf50', color: 'white', minWidth: 90, width: 90, borderRight: '1px solid #388e3c', padding: '10px 8px' }}>TEST COUNT<br/>AUTOMATION</th>
-                        <th style={{ background: '#4caf50', color: 'white', minWidth: 90, width: 90, borderRight: '1px solid #388e3c', padding: '10px 8px' }}>AUTOMATION<br/>%</th>
-                        <th style={{ background: '#4caf50', color: 'white', minWidth: 90, width: 90, borderRight: '1px solid #388e3c', padding: '10px 8px' }}>PASS<br/>AUTOMATION</th>
-                        <th style={{ background: '#4caf50', color: 'white', minWidth: 100, width: 100, borderRight: '1px solid #004080', padding: '10px 8px' }}>AUTOMATION<br/>COMPLETION %</th>
-                        <th style={{ background: '#003366', color: 'white', minWidth: 80, width: 80, borderRight: '1px solid #004080', padding: '10px 8px' }}>TEST COUNT<br/>MANUAL</th>
-                        <th style={{ background: '#003366', color: 'white', minWidth: 70, width: 70, borderRight: '1px solid #004080', padding: '10px 8px' }}>PASS<br/>MANUAL</th>
-                        <th style={{ background: '#003366', color: 'white', minWidth: 100, width: 100, padding: '10px 8px' }}>MANUAL<br/>COMPLETION %</th>
+                        <th style={{ background: '#4caf50', color: 'white', minWidth: 90, width: 90, borderRight: '1px solid #388e3c', padding: '10px 8px' }}>TEST COUNT<br />AUTOMATION</th>
+                        <th style={{ background: '#4caf50', color: 'white', minWidth: 90, width: 90, borderRight: '1px solid #388e3c', padding: '10px 8px' }}>AUTOMATION<br />%</th>
+                        <th style={{ background: '#4caf50', color: 'white', minWidth: 90, width: 90, borderRight: '1px solid #388e3c', padding: '10px 8px' }}>PASS<br />AUTOMATION</th>
+                        <th style={{ background: '#4caf50', color: 'white', minWidth: 100, width: 100, borderRight: '1px solid #004080', padding: '10px 8px' }}>AUTOMATION<br />COMPLETION %</th>
+                        <th style={{ background: '#003366', color: 'white', minWidth: 80, width: 80, borderRight: '1px solid #004080', padding: '10px 8px' }}>TEST COUNT<br />MANUAL</th>
+                        <th style={{ background: '#003366', color: 'white', minWidth: 70, width: 70, borderRight: '1px solid #004080', padding: '10px 8px' }}>PASS<br />MANUAL</th>
+                        <th style={{ background: '#003366', color: 'white', minWidth: 100, width: 100, padding: '10px 8px' }}>MANUAL<br />COMPLETION %</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -824,15 +840,13 @@ export default function Dashboard() {
                         const notReleased = Number(m.notReleased) || 0;
                         const defectRaised = Number(m.defectRaised) || 0;
                         const releaseRequested = Number(m.releaseRequested) || 0;
-                        
-                        // Calculate metrics
+
                         const executableCases = total - naCount;
                         const executed = passed + failed;
                         const pendingForExecution = executableCases - executed;
                         const onHoldDueToDefects = defectRaised;
                         const completionOnPassed = executableCases > 0 ? Math.round((passed / executableCases) * 100) : 0;
-                        
-                        // Automation vs Manual split (estimate: 85% automation for now - can be adjusted based on actual data)
+
                         const automationCount = Math.round(total * 0.85);
                         const manualCount = total - automationCount;
                         const automationPct = total > 0 ? Math.round((automationCount / total) * 100) : 0;
@@ -841,116 +855,83 @@ export default function Dashboard() {
                         const automationCompletionPct = automationCount > 0 ? Math.round((passAutomation / automationCount) * 100) : 0;
                         const manualCompletionPct = manualCount > 0 ? Math.round((passManual / manualCount) * 100) : 0;
 
+                        const cs = { fontFamily: "'Consolas','Monaco','Courier New',monospace", textAlign: 'center', padding: '14px 10px', verticalAlign: 'middle', fontSize: 14, color: '#1a1a2e', fontWeight: 600 };
+
                         return (
-                          <tr key={m.moduleId} style={{ 
-                            background: idx % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-raised)',
-                            borderBottom: '1px solid var(--border)',
-                            height: 48
+                          <tr key={m.moduleId} style={{
+                            background: idx % 2 === 0 ? '#ffffff' : '#f5f7fa',
+                            borderBottom: '1px solid #d0d7e2',
+                            height: 52
                           }}>
-                            <td style={{ fontWeight: 600, background: '#003366', color: 'white', padding: '12px 10px', verticalAlign: 'middle' }}>{m.moduleName}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{total}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{executableCases}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{executed}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e8f5e9', color: '#2e7d32', fontWeight: 700, padding: '12px 8px', verticalAlign: 'middle' }}>{passed}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#ffebee', color: '#c62828', fontWeight: 700, padding: '12px 8px', verticalAlign: 'middle' }}>{failed}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{pendingForExecution}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e3f2fd', padding: '12px 8px', verticalAlign: 'middle' }}>{onHoldDueToDefects}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e3f2fd', fontWeight: 700, padding: '12px 8px', verticalAlign: 'middle' }}>{completionOnPassed}%</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{releaseRequested}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{naCount}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{notReleased}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e8f5e9', padding: '12px 8px', verticalAlign: 'middle' }}>{automationCount}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e8f5e9', padding: '12px 8px', verticalAlign: 'middle' }}>{automationPct}%</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e8f5e9', padding: '12px 8px', verticalAlign: 'middle' }}>{passAutomation}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#e8f5e9', fontWeight: 700, padding: '12px 8px', verticalAlign: 'middle' }}>{automationCompletionPct}%</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{manualCount}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>{passManual}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', fontWeight: 700, padding: '12px 8px', verticalAlign: 'middle' }}>{manualCompletionPct}%</td>
+                            <td style={{ fontWeight: 700, background: '#003366', color: 'white', padding: '14px 12px', verticalAlign: 'middle', fontSize: 13, whiteSpace: 'nowrap' }}>{m.moduleName}</td>
+                            <td style={cs}>{total}</td>
+                            <td style={cs}>{executableCases}</td>
+                            <td style={cs}>{executed}</td>
+                            <td style={{ ...cs, background: '#e8f5e9', color: '#1b5e20' }}>{passed}</td>
+                            <td style={{ ...cs, background: '#ffebee', color: '#b71c1c' }}>{failed}</td>
+                            <td style={cs}>{pendingForExecution}</td>
+                            <td style={{ ...cs, background: '#e3f2fd', color: '#0d47a1' }}>{onHoldDueToDefects}</td>
+                            <td style={{ ...cs, background: '#e3f2fd', color: '#0d47a1', fontWeight: 700, fontSize: 15 }}>{completionOnPassed}%</td>
+                            <td style={cs}>{releaseRequested}</td>
+                            <td style={cs}>{naCount}</td>
+                            <td style={cs}>{notReleased}</td>
+                            <td style={{ ...cs, background: '#e8f5e9', color: '#1b5e20' }}>{automationCount}</td>
+                            <td style={{ ...cs, background: '#e8f5e9', color: '#1b5e20' }}>{automationPct}%</td>
+                            <td style={{ ...cs, background: '#e8f5e9', color: '#1b5e20' }}>{passAutomation}</td>
+                            <td style={{ ...cs, background: '#e8f5e9', color: '#1b5e20', fontWeight: 700, fontSize: 15 }}>{automationCompletionPct}%</td>
+                            <td style={cs}>{manualCount}</td>
+                            <td style={cs}>{passManual}</td>
+                            <td style={{ ...cs, fontWeight: 700, fontSize: 15 }}>{manualCompletionPct}%</td>
                           </tr>
                         );
                       })}
                       {/* Totals row */}
-                      <tr style={{ background: '#003366', color: 'white', fontWeight: 700, height: 48 }}>
-                        <td style={{ fontWeight: 700, padding: '12px 10px', verticalAlign: 'middle' }}>Total</td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {modules.reduce((sum, m) => sum + (Number(m.total) || 0), 0)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {modules.reduce((sum, m) => sum + (Number(m.total) || 0) - (Number(m.naCount) || 0), 0)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {modules.reduce((sum, m) => sum + (Number(m.passed) || 0) + (Number(m.failed) || 0), 0)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#4caf50', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {modules.reduce((sum, m) => sum + (Number(m.passed) || 0), 0)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#f44336', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {modules.reduce((sum, m) => sum + (Number(m.failed) || 0), 0)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {modules.reduce((sum, m) => {
-                            const total = Number(m.total) || 0;
-                            const na = Number(m.naCount) || 0;
-                            const passed = Number(m.passed) || 0;
-                            const failed = Number(m.failed) || 0;
-                            return sum + ((total - na) - (passed + failed));
-                          }, 0)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {modules.reduce((sum, m) => sum + (Number(m.defectRaised) || 0), 0)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {(() => {
-                            const totalExec = modules.reduce((sum, m) => sum + (Number(m.total) || 0) - (Number(m.naCount) || 0), 0);
-                            const totalPassed = modules.reduce((sum, m) => sum + (Number(m.passed) || 0), 0);
-                            return totalExec > 0 ? Math.round((totalPassed / totalExec) * 100) : 0;
-                          })()}%
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {modules.reduce((sum, m) => sum + (Number(m.releaseRequested) || 0), 0)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {modules.reduce((sum, m) => sum + (Number(m.naCount) || 0), 0)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {modules.reduce((sum, m) => sum + (Number(m.notReleased) || 0), 0)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#4caf50', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {Math.round(modules.reduce((sum, m) => sum + (Number(m.total) || 0), 0) * 0.85)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#4caf50', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {(() => {
-                            const total = modules.reduce((sum, m) => sum + (Number(m.total) || 0), 0);
-                            const auto = Math.round(total * 0.85);
-                            return total > 0 ? Math.round((auto / total) * 100) : 0;
-                          })()}%
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#4caf50', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {Math.round(modules.reduce((sum, m) => sum + (Number(m.passed) || 0), 0) * 0.85)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', background: '#4caf50', color: 'white', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {(() => {
-                            const total = modules.reduce((sum, m) => sum + (Number(m.total) || 0), 0);
-                            const autoCount = Math.round(total * 0.85);
-                            const passAuto = Math.round(modules.reduce((sum, m) => sum + (Number(m.passed) || 0), 0) * 0.85);
-                            return autoCount > 0 ? Math.round((passAuto / autoCount) * 100) : 0;
-                          })()}%
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {Math.round(modules.reduce((sum, m) => sum + (Number(m.total) || 0), 0) * 0.15)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {Math.round(modules.reduce((sum, m) => sum + (Number(m.passed) || 0), 0) * 0.15)}
-                        </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '12px 8px', verticalAlign: 'middle' }}>
-                          {(() => {
-                            const total = modules.reduce((sum, m) => sum + (Number(m.total) || 0), 0);
-                            const manualCount = Math.round(total * 0.15);
-                            const passManual = Math.round(modules.reduce((sum, m) => sum + (Number(m.passed) || 0), 0) * 0.15);
-                            return manualCount > 0 ? Math.round((passManual / manualCount) * 100) : 0;
-                          })()}%
-                        </td>
-                      </tr>
+                      {(() => {
+                        const ts = { fontFamily: "'Consolas','Monaco','Courier New',monospace", textAlign: 'center', padding: '14px 10px', verticalAlign: 'middle', fontSize: 15, fontWeight: 700, color: 'white' };
+
+                        const tTotal = modules.reduce((s, m) => s + (Number(m.total) || 0), 0);
+                        const tNA = modules.reduce((s, m) => s + (Number(m.naCount) || 0), 0);
+                        const tExec = tTotal - tNA;
+                        const tPassed = modules.reduce((s, m) => s + (Number(m.passed) || 0), 0);
+                        const tFailed = modules.reduce((s, m) => s + (Number(m.failed) || 0), 0);
+                        const tExecuted = tPassed + tFailed;
+                        const tPending = tExec - tExecuted;
+                        const tDefects = modules.reduce((s, m) => s + (Number(m.defectRaised) || 0), 0);
+                        const tCompPct = tExec > 0 ? Math.round((tPassed / tExec) * 100) : 0;
+                        const tRelReq = modules.reduce((s, m) => s + (Number(m.releaseRequested) || 0), 0);
+                        const tNotRel = modules.reduce((s, m) => s + (Number(m.notReleased) || 0), 0);
+                        const tAutoCount = Math.round(tTotal * 0.85);
+                        const tManCount = tTotal - tAutoCount;
+                        const tAutoPct = tTotal > 0 ? Math.round((tAutoCount / tTotal) * 100) : 0;
+                        const tPassAuto = Math.round(tPassed * 0.85);
+                        const tPassMan = tPassed - tPassAuto;
+                        const tAutoCompPct = tAutoCount > 0 ? Math.round((tPassAuto / tAutoCount) * 100) : 0;
+                        const tManCompPct = tManCount > 0 ? Math.round((tPassMan / tManCount) * 100) : 0;
+
+                        return (
+                          <tr style={{ background: '#003366', color: 'white', fontWeight: 700, height: 52 }}>
+                            <td style={{ ...ts, textAlign: 'left', paddingLeft: 12 }}>Total</td>
+                            <td style={ts}>{tTotal}</td>
+                            <td style={ts}>{tExec}</td>
+                            <td style={ts}>{tExecuted}</td>
+                            <td style={{ ...ts, background: '#4caf50' }}>{tPassed}</td>
+                            <td style={{ ...ts, background: '#f44336' }}>{tFailed}</td>
+                            <td style={ts}>{tPending}</td>
+                            <td style={ts}>{tDefects}</td>
+                            <td style={ts}>{tCompPct}%</td>
+                            <td style={ts}>{tRelReq}</td>
+                            <td style={ts}>{tNA}</td>
+                            <td style={ts}>{tNotRel}</td>
+                            <td style={{ ...ts, background: '#4caf50' }}>{tAutoCount}</td>
+                            <td style={{ ...ts, background: '#4caf50' }}>{tAutoPct}%</td>
+                            <td style={{ ...ts, background: '#4caf50' }}>{tPassAuto}</td>
+                            <td style={{ ...ts, background: '#4caf50' }}>{tAutoCompPct}%</td>
+                            <td style={ts}>{tManCount}</td>
+                            <td style={ts}>{tPassMan}</td>
+                            <td style={ts}>{tManCompPct}%</td>
+                          </tr>
+                        );
+                      })()}
                     </tbody>
                   </table>
                 </div>
@@ -958,29 +939,33 @@ export default function Dashboard() {
             )}
 
             {/* ── Row 1: Key stats ──────────────────────────────── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)',
-              gap: 10, marginBottom: 12 }}>
-              <StatTile label="Total TCs"    value={d.totalTestCases} color="var(--accent)"
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)',
+              gap: 10, marginBottom: 12
+            }}>
+              <StatTile label="Total TCs" value={d.totalTestCases} color="var(--accent)"
                 icon={BarChart2} />
-              <StatTile label="Executed"      value={totalExecuted}    color="#00d4ff"
+              <StatTile label="Executed" value={totalExecuted} color="#00d4ff"
                 icon={Activity} subtitle={`${executionPct}% of total`} />
-              <StatTile label="Pass"          value={d.passed}         color={S.Pass.color}
-                bg={S.Pass.bg}  icon={CheckCircle2} />
-              <StatTile label="Fail"          value={d.failed}         color={S.Fail.color}
-                bg={S.Fail.bg}  icon={XCircle} />
-              <StatTile label="In Progress"   value={d.inProgress}     color={S.InProgress.color}
+              <StatTile label="Pass" value={d.passed} color={S.Pass.color}
+                bg={S.Pass.bg} icon={CheckCircle2} />
+              <StatTile label="Fail" value={d.failed} color={S.Fail.color}
+                bg={S.Fail.bg} icon={XCircle} />
+              <StatTile label="In Progress" value={d.inProgress} color={S.InProgress.color}
                 bg={S.InProgress.bg} icon={Clock} />
-              <StatTile label="Defect Raised" value={d.defectRaised}   color={S.Defect.color}
+              <StatTile label="Defect Raised" value={d.defectRaised} color={S.Defect.color}
                 bg={S.Defect.bg} icon={AlertTriangle} />
             </div>
 
             {/* ── Row 2: More metrics ───────────────────────────── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)',
-              gap: 10, marginBottom: 20 }}>
-              <StatTile label="NA"            value={d.naCount}        color={S.NA.color}          bg={S.NA.bg} />
-              <StatTile label="Not Released"  value={d.notReleased}    color={S.NotReleased.color} bg={S.NotReleased.bg} />
-              <StatTile label="Assigned"      value={d.assigned}       color={S.Assigned.color}    bg={S.Assigned.bg} />
-              <StatTile label="Retest"        value={d.retest}         color="#ce93d8" />
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)',
+              gap: 10, marginBottom: 20
+            }}>
+              <StatTile label="NA" value={d.naCount} color={S.NA.color} bg={S.NA.bg} />
+              <StatTile label="Not Released" value={d.notReleased} color={S.NotReleased.color} bg={S.NotReleased.bg} />
+              <StatTile label="Assigned" value={d.assigned} color={S.Assigned.color} bg={S.Assigned.bg} />
+              <StatTile label="Retest" value={d.retest} color="#ce93d8" />
               <StatTile label="Pass Rate"
                 value={`${d.passRate}%`}
                 color={d.passRate >= 80 ? '#00e676' : d.passRate >= 60 ? '#ffd740' : '#ff5252'} />
@@ -993,38 +978,46 @@ export default function Dashboard() {
             <div className="card" style={{ marginBottom: 20 }}>
               <div className="card-header">
                 <span className="card-title">Execution Progress</span>
-                <span style={{ fontSize: 11, color: 'var(--text3)',
-                  fontFamily: 'var(--font-mono)' }}>
+                <span style={{
+                  fontSize: 11, color: 'var(--text3)',
+                  fontFamily: 'var(--font-mono)'
+                }}>
                   {totalExecuted} / {d.totalTestCases} test cases executed
                 </span>
               </div>
-              <ProgressBar value={executionPct}   color="#00d4ff"  label="Overall Execution Rate" />
-              <ProgressBar value={passPct}         color="#00e676"  label="Pass Rate (of executed)" />
+              <ProgressBar value={executionPct} color="#00d4ff" label="Overall Execution Rate" />
+              <ProgressBar value={passPct} color="#00e676" label="Pass Rate (of executed)" />
               <ProgressBar
-                value={d.totalTestCases > 0 ? Math.round(Number(d.defectRaised)/d.totalTestCases*100) : 0}
+                value={d.totalTestCases > 0 ? Math.round(Number(d.defectRaised) / d.totalTestCases * 100) : 0}
                 color="#ff9800" label="Defect Rate" />
             </div>
 
             {/* ── Defects summary ───────────────────────────────── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr',
-              gap: 16, marginBottom: 20 }}>
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1fr 2fr',
+              gap: 16, marginBottom: 20
+            }}>
               <div className="card">
                 <div className="card-header">
                   <span className="card-title">Defects Overview</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {[
-                    { label: 'Total Defects',    value: defects.length,   color: 'var(--accent)' },
-                    { label: 'Open / Active',    value: openDefects,      color: '#ff9800' },
-                    { label: 'Critical',         value: criticalDefects,  color: '#ff5252' },
-                    { label: 'Fixed / Closed',   value: defects.filter(df => ['FIXED','CLOSED'].includes(df.status)).length, color: '#00e676' },
+                    { label: 'Total Defects', value: defects.length, color: 'var(--accent)' },
+                    { label: 'Open / Active', value: openDefects, color: '#ff9800' },
+                    { label: 'Critical', value: criticalDefects, color: '#ff5252' },
+                    { label: 'Fixed / Closed', value: defects.filter(df => ['FIXED', 'CLOSED'].includes(df.status)).length, color: '#00e676' },
                   ].map(({ label, value, color }) => (
-                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between',
+                    <div key={label} style={{
+                      display: 'flex', justifyContent: 'space-between',
                       alignItems: 'center', padding: '8px 0',
-                      borderBottom: '1px solid var(--border)' }}>
+                      borderBottom: '1px solid var(--border)'
+                    }}>
                       <span style={{ fontSize: 12, color: 'var(--text2)' }}>{label}</span>
-                      <span style={{ fontSize: 16, fontWeight: 700, color,
-                        fontFamily: 'var(--font-mono)' }}>{value}</span>
+                      <span style={{
+                        fontSize: 16, fontWeight: 700, color,
+                        fontFamily: 'var(--font-mono)'
+                      }}>{value}</span>
                     </div>
                   ))}
                 </div>
@@ -1042,8 +1035,10 @@ export default function Dashboard() {
                         innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value">
                         {pieData.map((e, i) => <Cell key={e.name || i} fill={e.color} />)}
                       </Pie>
-                      <Tooltip contentStyle={{ background: 'var(--bg-raised)',
-                        border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
+                      <Tooltip contentStyle={{
+                        background: 'var(--bg-raised)',
+                        border: '1px solid var(--border)', borderRadius: 8, fontSize: 12
+                      }}
                         formatter={(v, n) => [`${v} TCs`, n]} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                     </PieChart>
@@ -1071,13 +1066,15 @@ export default function Dashboard() {
                     <XAxis type="number" tick={{ fill: 'var(--text3)', fontSize: 10 }} />
                     <YAxis type="category" dataKey="name" width={120}
                       tick={{ fill: 'var(--text2)', fontSize: 10 }} />
-                    <Tooltip contentStyle={{ background: 'var(--bg-raised)',
-                      border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                    <Bar dataKey="Pass"     stackId="a" fill={S.Pass.color} />
-                    <Bar dataKey="Fail"     stackId="a" fill={S.Fail.color} />
-                    <Bar dataKey="In Prog"  stackId="a" fill={S.InProgress.color} />
-                    <Bar dataKey="NA"       stackId="a" fill={S.NA.color} />
-                    <Bar dataKey="Not Rel"  stackId="a" fill={S.NotReleased.color} />
+                    <Tooltip contentStyle={{
+                      background: 'var(--bg-raised)',
+                      border: '1px solid var(--border)', borderRadius: 8, fontSize: 12
+                    }} />
+                    <Bar dataKey="Pass" stackId="a" fill={S.Pass.color} />
+                    <Bar dataKey="Fail" stackId="a" fill={S.Fail.color} />
+                    <Bar dataKey="In Prog" stackId="a" fill={S.InProgress.color} />
+                    <Bar dataKey="NA" stackId="a" fill={S.NA.color} />
+                    <Bar dataKey="Not Rel" stackId="a" fill={S.NotReleased.color} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
