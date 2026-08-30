@@ -320,6 +320,11 @@ export const repositoryApi = {
   upload:     (projectId, formData) =>
     api.post(`/repository/projects/${projectId}/documents`, formData,
              { headers: { 'Content-Type': 'multipart/form-data' } }),
+  uploadMultiple: (projectId, formData, onProgress) =>
+    api.post(`/repository/projects/${projectId}/documents/bulk`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: onProgress,
+    }),
   download:   (docId)    => api.get(`/repository/documents/${docId}/download`,
                                     { responseType: 'blob' }),
   archive:    (docId)    => api.patch(`/repository/documents/${docId}/archive`),

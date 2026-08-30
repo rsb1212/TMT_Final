@@ -86,6 +86,85 @@ public class RepositoryService {
         return toResponse(repositoryDocumentRepository.save(doc));
     }
 
+    /** Upload multiple documents to the central repository at once */
+    @Transactional
+    public List<RepositoryDocumentResponse> uploadMultiple(UUID projectId, RepositoryCategory category,
+                                                           String description, MultipartFile[] files,
+                                                           List<String> relativePaths,
+                                                           String uploaderEmail) throws IOException {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+        User uploader = userRepository.findByEmail(uploaderEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User", uploaderEmail));
+
+        List<RepositoryDocumentResponse> responses = new java.util.ArrayList<>();
+
+        for (int i = 0; i < files.length; i++) {
+            MultipartFile file = files[i];
+            if (file.isEmpty()) continue;
+
+            String originalName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "file";
+
+            // Use relative path from folder upload if available
+            String relativePath = (relativePaths != null && i < relativePaths.size())
+                    ? relativePaths.get(i) : null;
+
+            // Determine current max version for same file in same project/category
+            List<RepositoryDocument> existing = repositoryDocumentRepository
+                    .findByProjectAndCategoryOrderByUploadedAtDesc(project, category);
+
+            int nextVersion = existing.stream()
+                    .filter(d -> originalName.equals(d.getOriginalName()))
+                    .mapToInt(RepositoryDocument::getVersion)
+                    .max()
+                    .orElse(0) + 1;
+
+            // Build storage path; if relativePath is provided, include folder structure
+            Path dir;
+            if (relativePath != null && relativePath.contains("/")) {
+                // e.g. "myFolder/subFolder/file.txt" -> store under .../myFolder/subFolder/
+                String folderPart = relativePath.substring(0, relativePath.lastIndexOf('/'));
+                dir = Paths.get(uploadDir, "repository", projectId.toString(),
+                        category.name().toLowerCase(), folderPart);
+            } else {
+                dir = Paths.get(uploadDir, "repository", projectId.toString(),
+                        category.name().toLowerCase());
+            }
+            Files.createDirectories(dir);
+
+            String safeFilename = UUID.randomUUID() + "_" +
+                    originalName.replaceAll("[^a-zA-Z0-9._-]", "_");
+            Path target = dir.resolve(safeFilename);
+            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+
+            // Build description: append relative path info if from folder upload
+            String docDescription = description;
+            if (relativePath != null && !relativePath.isBlank()) {
+                docDescription = (description != null && !description.isBlank())
+                        ? description + " | Path: " + relativePath
+                        : "Path: " + relativePath;
+            }
+
+            RepositoryDocument doc = RepositoryDocument.builder()
+                    .project(project)
+                    .category(category)
+                    .originalName(originalName)
+                    .fileName(safeFilename)
+                    .filePath(target.toString())
+                    .fileSize(file.getSize())
+                    .mimeType(file.getContentType())
+                    .version(nextVersion)
+                    .description(docDescription)
+                    .uploadedBy(uploader)
+                    .status("ACTIVE")
+                    .build();
+
+            responses.add(toResponse(repositoryDocumentRepository.save(doc)));
+        }
+
+        return responses;
+    }
+
     /** List all active documents for a project, optionally filtered by category */
     @Transactional(readOnly = true)
     public List<RepositoryDocumentResponse> list(UUID projectId, RepositoryCategory category) {

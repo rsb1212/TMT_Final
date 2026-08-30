@@ -44,6 +44,34 @@ public class RepositoryController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    /** Upload multiple documents to the central repository at once */
+    @PostMapping(value = "/projects/{projectId}/documents/bulk", consumes = "multipart/form-data")
+    @PreAuthorize("hasAnyRole('TESTER','MANAGER','ADMIN','SME')")
+    @Operation(summary = "Bulk upload documents to the central repository")
+    public ResponseEntity<ApiResponse<List<RepositoryDocumentResponse>>> uploadMultiple(
+            @PathVariable UUID projectId,
+            @RequestParam("files") MultipartFile[] files,
+            @RequestParam("category") RepositoryCategory category,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "relativePaths", required = false) String relativePathsJson,
+            @AuthenticationPrincipal UserDetails user) throws IOException {
+
+        List<String> relativePaths = null;
+        if (relativePathsJson != null && !relativePathsJson.isBlank()) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                relativePaths = mapper.readValue(relativePathsJson,
+                        mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+            } catch (Exception e) {
+                // Ignore malformed JSON — proceed without relative paths
+            }
+        }
+
+        List<RepositoryDocumentResponse> responses =
+                repositoryService.uploadMultiple(projectId, category, description, files, relativePaths, user.getUsername());
+        return ResponseEntity.ok(ApiResponse.success(responses));
+    }
+
     /** List documents for a project, optionally filtered by category */
     @GetMapping("/projects/{projectId}/documents")
     @PreAuthorize("hasAnyRole('TESTER','MANAGER','ADMIN','SME')")
