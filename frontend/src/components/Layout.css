@@ -1589,3 +1589,47 @@ select option {
 .text-accent { color: var(--accent); }
 .text-muted  { color: var(--text3); }
 .glass-pulse { animation: glassPulse 3s ease-in-out infinite; }
+
+/* ── Interactive Stagger Animations ──────────────────────────────── */
+.animate-slide-up {
+  opacity: 0;
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* ── Interactive Click Effects ───────────────────────────────────── */
+.btn:active {
+  transform: scale(0.95) !important;
+  transition: transform 0.1s;
+}
+
+/* ── Table Row Enhanced Hover ────────────────────────────────────── */
+tbody tr.interactive-row {
+  cursor: pointer;
+  transform-origin: center;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, background 0.25s ease;
+}
+
+tbody tr.interactive-row:hover {
+  transform: scale(1.01) translateY(-2px);
+  box-shadow: 0 4px 12px rgba(14,165,233,0.15);
+  border-radius: var(--r-md);
+  z-index: 10;
+  position: relative;
+}
+
+[data-theme="dark"] tbody tr.interactive-row:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+tbody tr.interactive-row td {
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+tbody tr.interactive-row:hover td {
+  border-bottom-color: transparent;
+}

@@ -88,7 +88,7 @@ export default function SmeDashboardPage() {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container animate-fade-in" style={{ paddingBottom: '2rem' }}>
       {/* Header */}
       <div className="page-header">
         <div>
@@ -207,8 +207,10 @@ export default function SmeDashboardPage() {
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
-        {dashboardData?.moduleStats?.map(module => (
-          <ModuleCard key={module.moduleId} module={module} />
+        {dashboardData?.moduleStats?.map((module, idx) => (
+          <div key={module.moduleId} className="animate-slide-up" style={{ animationDelay: `${idx * 0.1}s` }}>
+            <ModuleCard module={module} />
+          </div>
         ))}
       </div>
 
@@ -232,8 +234,8 @@ export default function SmeDashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {dashboardData.pendingSignOffCases.map(tc => (
-                    <tr key={tc.id}>
+                  {dashboardData.pendingSignOffCases.map((tc, idx) => (
+                    <tr key={tc.id} className="interactive-row animate-slide-up" style={{ animationDelay: `${idx * 0.05}s` }}>
                       <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent)' }}>{tc.code}</td>
                       <td style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={tc.title}>{tc.title}</td>
                       <td style={{ fontSize: 12, color: 'var(--text-3)' }}>{tc.module?.name || '—'}</td>
@@ -255,8 +257,8 @@ export default function SmeDashboardPage() {
 
 function StatCard({ icon, label, value, color }) {
   return (
-    <div className="glass-card" style={{ padding: '1.25rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+    <div className="card" style={{ padding: '24px' }}>
+      <div className="card-header" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <div style={{ 
           width: '48px', 
           height: '48px', 
