@@ -61,7 +61,7 @@ export default function LoginPage() {
           <div className="login-icon">
             <img src={BatLogo} alt="Brand Logo" width={36} height={36} />
           </div>
-          <h1 className="login-title">Test Genii AI</h1>
+          <h1 className="login-title">Test Genii</h1>
           <p className="login-sub">Intelligent Test Knowledge & Management Platform</p>
         </div>
 

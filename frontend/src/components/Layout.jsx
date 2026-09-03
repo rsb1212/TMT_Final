@@ -109,7 +109,7 @@ export default function Layout() {
             <img src={BatLogo} alt="Bat Logo" width={28} height={28} />
           </div>
           <div className="brand-text">
-            <span className="brand-name">Test Genii AI</span>
+            <span className="brand-name">Test Genii</span>
             <span className="brand-tag">Intelligent Test Knowledge & Management Platform</span>
           </div>
         </div>

@@ -3,45 +3,100 @@
 # NEVER commit the real application.properties to version control.
 
 spring.application.name=test-management-tool
-server.port=${SERVER_PORT:8080}
+spring.profiles.active=${SPRING_PROFILES_ACTIVE:prod}
 
-# Database
+# ── Server ───────────────────────────────────────────────────────────────────
+server.port=${SERVER_PORT:8080}
+server.address=${SERVER_ADDRESS:0.0.0.0}
+server.servlet.context-path=${SERVER_CONTEXT_PATH:/}
+server.shutdown=graceful
+spring.lifecycle.timeout-per-shutdown-phase=30s
+
+# Behind a reverse proxy (nginx / ELB)
+server.forward-headers-strategy=framework
+server.tomcat.remoteip.remote-ip-header=X-Forwarded-For
+server.tomcat.remoteip.protocol-header=X-Forwarded-Proto
+server.tomcat.accesslog.enabled=${ACCESS_LOG_ENABLED:false}
+server.tomcat.accesslog.directory=${ACCESS_LOG_DIR:logs}
+server.tomcat.max-threads=${TOMCAT_MAX_THREADS:200}
+server.tomcat.accept-count=${TOMCAT_ACCEPT_COUNT:100}
+server.tomcat.connection-timeout=${TOMCAT_CONN_TIMEOUT:20000}
+
+# Response compression
+server.compression.enabled=true
+server.compression.mime-types=application/json,application/xml,text/html,text/plain,text/css,application/javascript
+server.compression.min-response-size=1024
+
+# Hide error details from clients
+server.error.include-message=never
+server.error.include-stacktrace=never
+server.error.include-binding-errors=never
+
+# ── Database ─────────────────────────────────────────────────────────────────
 spring.datasource.url=${DATASOURCE_URL:jdbc:postgresql://localhost:5432/tmt_new_db}
 spring.datasource.username=${DATASOURCE_USER:postgres}
 spring.datasource.password=${DATASOURCE_PASSWORD:}
 spring.datasource.driver-class-name=org.postgresql.Driver
 
+# HikariCP
+spring.datasource.hikari.pool-name=TmtHikariPool
+spring.datasource.hikari.maximum-pool-size=${DB_POOL_MAX:20}
+spring.datasource.hikari.minimum-idle=${DB_POOL_MIN_IDLE:5}
+spring.datasource.hikari.connection-timeout=${DB_POOL_CONN_TIMEOUT:30000}
+spring.datasource.hikari.idle-timeout=${DB_POOL_IDLE_TIMEOUT:600000}
+spring.datasource.hikari.max-lifetime=${DB_POOL_MAX_LIFETIME:1800000}
+spring.datasource.hikari.leak-detection-threshold=${DB_POOL_LEAK_THRESHOLD:0}
+
 frontend.url=${FRONTEND_URL:http://localhost:3000}
 
-# JPA
-spring.jpa.hibernate.ddl-auto=update
+# ── JPA / Hibernate ──────────────────────────────────────────────────────────
+# Use 'validate' in production; override with JPA_DDL_AUTO=update for first-run migrations
+spring.jpa.hibernate.ddl-auto=${JPA_DDL_AUTO:validate}
+spring.jpa.open-in-view=false
 spring.jpa.show-sql=${JPA_SHOW_SQL:false}
-spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.format_sql=false
+spring.jpa.properties.hibernate.jdbc.batch_size=25
+spring.jpa.properties.hibernate.order_inserts=true
+spring.jpa.properties.hibernate.order_updates=true
 
 # JWT — REQUIRED: Set JWT_SECRET env var with a 256-bit Base64 key
 # Generate one with: openssl rand -base64 64
 app.jwt.secret=${JWT_SECRET:}
 app.jwt.expiration=${JWT_EXPIRATION:7200000}
 
-# SpringDoc
+# ── SpringDoc / Swagger (disabled in production by default) ──────────────────
+springdoc.api-docs.enabled=${SWAGGER_ENABLED:false}
+springdoc.swagger-ui.enabled=${SWAGGER_ENABLED:false}
 springdoc.api-docs.path=/api-docs
 springdoc.swagger-ui.path=/swagger-ui.html
 springdoc.swagger-ui.operationsSorter=method
 
-# Actuator
-management.endpoints.web.exposure.include=health,info,metrics
+# ── Actuator (locked down) ───────────────────────────────────────────────────
+management.endpoints.web.exposure.include=${ACTUATOR_ENDPOINTS:health,info}
 management.endpoint.health.show-details=when_authorized
+management.endpoint.health.probes.enabled=true
+management.info.env.enabled=false
+management.info.java.enabled=true
+management.info.os.enabled=false
 
-# Logging
-logging.level.com.testmgmt=${APP_LOG_LEVEL:DEBUG}
-logging.level.org.springframework.security=${SECURITY_LOG_LEVEL:INFO}
+# ── Logging ──────────────────────────────────────────────────────────────────
+logging.level.root=${ROOT_LOG_LEVEL:INFO}
+logging.level.com.testmgmt=${APP_LOG_LEVEL:INFO}
+logging.level.org.springframework.security=${SECURITY_LOG_LEVEL:WARN}
+logging.level.org.hibernate.SQL=${SQL_LOG_LEVEL:WARN}
+logging.file.name=${LOG_FILE:logs/tmt-backend.log}
+logging.logback.rollingpolicy.max-file-size=${LOG_MAX_SIZE:50MB}
+logging.logback.rollingpolicy.max-history=${LOG_MAX_HISTORY:30}
+logging.logback.rollingpolicy.total-size-cap=${LOG_TOTAL_SIZE_CAP:2GB}
 
 # Cache
 spring.cache.type=simple
 
-# Multipart (for file uploads)
+# Multipart (file uploads)
+spring.servlet.multipart.enabled=true
 spring.servlet.multipart.max-file-size=${MAX_FILE_SIZE:100MB}
 spring.servlet.multipart.max-request-size=${MAX_REQUEST_SIZE:500MB}
+spring.servlet.multipart.file-size-threshold=2MB
 
 # JIRA Integration (Optional)
 jira.enabled=${JIRA_ENABLED:false}

@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,34 @@ public class JwtUtil {
 
     @Value("${app.jwt.expiration}")
     private long expiration;
+
+    /** Cached signing key — derived once at startup. */
+    private SecretKey signKey;
+
+    @PostConstruct
+    void init() {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                    "app.jwt.secret is not set. Provide a Base64-encoded 256-bit key via the JWT_SECRET env var. "
+                            + "Generate one with: openssl rand -base64 64");
+        }
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(secret);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalStateException(
+                    "app.jwt.secret is not valid Base64. Regenerate with: openssl rand -base64 64", ex);
+        }
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException(
+                    "app.jwt.secret must decode to at least 32 bytes (256 bits) for HS256. "
+                            + "Current length: " + keyBytes.length + " bytes.");
+        }
+        if (expiration <= 0) {
+            throw new IllegalStateException("app.jwt.expiration must be a positive number of milliseconds.");
+        }
+        this.signKey = Keys.hmacShaKeyFor(keyBytes);
+    }
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
@@ -120,7 +149,6 @@ public class JwtUtil {
     }
 
     private SecretKey getSignKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return signKey;
     }
 }
