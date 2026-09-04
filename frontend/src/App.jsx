@@ -6,6 +6,7 @@ import Dashboard              from './pages/Dashboard';
 import TestCasesPage          from './pages/TestCasesPage';
 import ProjectsPage           from './pages/ProjectsPage';
 import CallsPage   from './pages/CallsPage';
+import PdCrCallsPage from './pages/PdCrCallsPage';
 import DefectsPage            from './pages/DefectsPage';
 import WorkflowPage           from './pages/WorkflowPage';
 import ProductivityPage       from './pages/ProductivityPage';
@@ -48,6 +49,7 @@ export default function App() {
               <ProtectedRoute roles={['TESTER','MANAGER','ADMIN']}><ExecutionPage /></ProtectedRoute>
             }/>
             <Route path="calls"       element={<CallsPage />} />
+            <Route path="pdcr-calls"  element={<PdCrCallsPage />} />
             <Route path="defects"       element={<DefectsPage />} />
 
             {/* ── Manager / SME ── */}

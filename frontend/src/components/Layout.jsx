@@ -6,7 +6,8 @@ import {
   LayoutDashboard, FolderKanban, ClipboardList, Bug, GitBranch, Phone,
   BarChart2, PlayCircle, Users, LogOut, ChevronRight, ChevronLeft,
   Layers, Calendar, CheckSquare, TrendingUp, BookOpen,
-  FlaskConical, Activity, TestTube2, Sun, Moon, FolderOpen, Building2
+  FlaskConical, Activity, TestTube2, Sun, Moon, FolderOpen, Building2,
+  PhoneForwarded
 } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import GlobalSearchBar  from './GlobalSearchBar';
@@ -24,6 +25,7 @@ const NAV_SECTIONS = [
       { to: '/execution',  icon: PlayCircle,         label: 'Execution', roles: ['TESTER','MANAGER','ADMIN'] },
       { to: '/defects',    icon: Bug,                label: 'Defects' },
       { to: '/calls',     icon: Phone,              label: 'QA Calls' },
+      { to: '/pdcr-calls', icon: PhoneForwarded,    label: 'PD/CR Calls' },
       { to: '/repository',    icon: FolderOpen,     label: 'Repository',     roles: ['TESTER','MANAGER','ADMIN','SME'] },
       { to: '/release-inbox', icon: LogOut,        label: 'Release Inbox',  roles: ['MANAGER','ADMIN'] },
     ],

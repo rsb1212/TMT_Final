@@ -312,6 +312,17 @@ export const callApi = {
   delete:     (id)         => api.delete(`/calls/${id}`),
 };
 
+// ── PD/CR Call Tracking Module ──────────────────────────────────────────────
+export const pdcrCallApi = {
+  list:       (params = {}) => api.get(`/pdcr-calls`, { params }),
+  dashboard:  (projectId)   => api.get(`/pdcr-calls/dashboard`,
+                                       { params: projectId ? { projectId } : {} }),
+  get:        (id)          => api.get(`/pdcr-calls/${id}`),
+  create:     (data)        => api.post(`/pdcr-calls`, data),
+  update:     (id, data)    => api.put(`/pdcr-calls/${id}`, data),
+  delete:     (id)          => api.delete(`/pdcr-calls/${id}`),
+};
+
 // ── Central Repository Module ───────────────────────────────────────────────
 export const repositoryApi = {
   list:       (projectId, category) =>
