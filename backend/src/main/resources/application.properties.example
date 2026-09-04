@@ -52,7 +52,9 @@ frontend.url=${FRONTEND_URL:http://localhost:3000}
 # ── JPA / Hibernate ──────────────────────────────────────────────────────────
 # Use 'validate' in production; override with JPA_DDL_AUTO=update for first-run migrations
 spring.jpa.hibernate.ddl-auto=${JPA_DDL_AUTO:validate}
-spring.jpa.open-in-view=false
+# Keep open-in-view=true: some list services build DTOs outside a transaction
+# and rely on lazy loading during JSON serialization.
+spring.jpa.open-in-view=true
 spring.jpa.show-sql=${JPA_SHOW_SQL:false}
 spring.jpa.properties.hibernate.format_sql=false
 spring.jpa.properties.hibernate.jdbc.batch_size=25

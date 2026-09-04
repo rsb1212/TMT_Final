@@ -5,7 +5,7 @@
 # Keep only the safe templates:
 !.env.example
 !.env.uat
-
+New Microsoft Excel Worksheet.xlsx
 # ── Build output ────────────────────────────────────────────────────────────
 target/
 *.jar

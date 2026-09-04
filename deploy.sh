@@ -16,6 +16,7 @@ LOCAL_BACKEND_DIR="./backend"
 LOCAL_FRONTEND_DIR="./frontend"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
