@@ -9,11 +9,6 @@ export default function TenantSelector() {
   const [viewAll, setViewAll] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Only show for ADMIN users
-  if (user?.role !== 'ADMIN') {
-    return null;
-  }
-
   useEffect(() => {
     // Load tenants list when component mounts (for admins)
     if (user?.role === 'ADMIN' && tenants.length === 0) {
@@ -32,6 +27,11 @@ export default function TenantSelector() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Only show for ADMIN users
+  if (user?.role !== 'ADMIN') {
+    return null;
+  }
 
   const handleViewAll = () => {
     setViewAll(true);

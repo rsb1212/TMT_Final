@@ -343,6 +343,41 @@ export const repositoryApi = {
   categories: ()         => api.get(`/repository/categories`),
 };
 
+// ── Central Repository & Confluence Knowledge Base ───────────────────────────
+export const repositoryModuleApi = {
+  getTree:        ()              => api.get(`/repository-modules/tree`),
+  getAllModules:  ()              => api.get(`/repository-modules`),
+  createModule:   (data)          => api.post(`/repository-modules`, data),
+  updateModule:   (id, data)      => api.put(`/repository-modules/${id}`, data),
+  deleteModule:   (id)            => api.delete(`/repository-modules/${id}`),
+
+  getRootNodes:   (moduleId)      => api.get(`/repository-modules/${moduleId}/nodes`),
+  getChildNodes:  (nodeId)        => api.get(`/repository-modules/nodes/${nodeId}/children`),
+  createNode:     (data)          => api.post(`/repository-modules/nodes`, data),
+  updateNode:     (nodeId, data)  => api.put(`/repository-modules/nodes/${nodeId}`, data),
+  deleteNode:     (nodeId)        => api.delete(`/repository-modules/nodes/${nodeId}`),
+
+  getDocuments:   (nodeId)        => api.get(`/repository-modules/nodes/${nodeId}/documents`),
+  uploadDocument: (nodeId, formData) =>
+    api.post(`/repository-modules/nodes/${nodeId}/documents`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  archiveDocument:(docId)         => api.put(`/repository-modules/documents/${docId}/archive`),
+  deleteDocument: (docId)         => api.delete(`/repository-modules/documents/${docId}`),
+
+  // Confluence Living Pages
+  getPage:        (nodeId)        => api.get(`/repository-modules/nodes/${nodeId}/page`),
+  savePage:       (nodeId, data)  => api.put(`/repository-modules/nodes/${nodeId}/page`, data),
+  getVersions:    (nodeId)        => api.get(`/repository-modules/nodes/${nodeId}/versions`),
+  restoreVersion: (nodeId, version) => api.post(`/repository-modules/nodes/${nodeId}/restore-version`, null, { params: { version } }),
+  getComments:    (nodeId)        => api.get(`/repository-modules/nodes/${nodeId}/comments`),
+  addComment:     (nodeId, text)  => api.post(`/repository-modules/nodes/${nodeId}/comments`, { text }),
+  toggleStar:     (nodeId)        => api.post(`/repository-modules/nodes/${nodeId}/star`),
+  seedModules:    ()              => api.post(`/repository-modules/seed`),
+};
+
+export const confluenceApi = repositoryModuleApi;
+
 // ── Release Management ──────────────────────────────────────────────────────
 export const releaseApi = {
   request:    (testCaseId, data) => api.post(`/releases/testcases/${testCaseId}/request`, data),

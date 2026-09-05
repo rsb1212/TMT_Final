@@ -326,4 +326,254 @@ public class RepositoryModuleService {
         RepositoryNode crCalls = createNode(module.getId(), null, "CR Calls", null, "folder", "FOLDER", true);
         createNode(module.getId(), crCalls.getId(), "Call Number", null, "file", "DOCUMENT_CONTAINER", false);
     }
+
+    // ==================== CONFLUENCE PAGE OPERATIONS ====================
+
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
+    public Map<String, Object> getPage(UUID nodeId, String username) {
+        RepositoryNode node = nodeRepository.findById(nodeId)
+                .orElseThrow(() -> new RuntimeException("Node not found"));
+
+        Path pagesDir = Paths.get(UPLOAD_DIR, "pages");
+        Path pageFile = pagesDir.resolve(nodeId.toString() + ".json");
+
+        if (Files.exists(pageFile)) {
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> pageData = objectMapper.readValue(pageFile.toFile(), Map.class);
+                pageData.put("isStarred", getUserStars(username).contains(nodeId.toString()));
+                return pageData;
+            } catch (Exception e) {
+                log.error("Failed to read page file for node {}", nodeId, e);
+            }
+        }
+
+        // Return default initial Confluence template page if not created yet
+        Map<String, Object> defaultPage = new HashMap<>();
+        defaultPage.put("nodeId", nodeId.toString());
+        defaultPage.put("title", node.getName());
+        defaultPage.put("description", node.getDescription() != null ? node.getDescription() : "");
+        defaultPage.put("tags", List.of("Documentation", "Overview"));
+        defaultPage.put("version", 1);
+        defaultPage.put("lastModifiedBy", username != null ? username : "System");
+        defaultPage.put("lastModifiedAt", java.time.Instant.now().toString());
+        defaultPage.put("isStarred", getUserStars(username).contains(nodeId.toString()));
+
+        String spaceName = node.getRepositoryModule() != null ? node.getRepositoryModule().getName() : "Repository";
+        String initialContent = "# " + node.getName() + "\n\n"
+                + "> ℹ️ **About this Page**  \n"
+                + "> This page is part of the **" + spaceName + "** space documentation in Test Genii.\n\n"
+                + "## 📋 Overview\n"
+                + (node.getDescription() != null && !node.getDescription().isBlank() ? node.getDescription() + "\n\n" : "Add detailed documentation, technical specs, test scenarios, and guidelines for " + node.getName() + ".\n\n")
+                + "## 🚀 Objectives & Scope\n"
+                + "- [ ] Define core functionalities\n"
+                + "- [ ] Review requirement coverage\n"
+                + "- [ ] Execute smoke and regression test suites\n\n"
+                + "## 💡 Key Highlights\n"
+                + "| Item | Status | Priority | Notes |\n"
+                + "| :--- | :--- | :--- | :--- |\n"
+                + "| Integration Testing | In Progress | High | Verify API payloads |\n"
+                + "| Regression Pack | Planned | Medium | Run automated checks |\n\n"
+                + "## 📝 Important Notes\n"
+                + "> 💡 **Tip:** Use the **Edit** button above to modify this document or pick from predefined Confluence templates!\n";
+
+        defaultPage.put("content", initialContent);
+        return defaultPage;
+    }
+
+    public Map<String, Object> savePage(UUID nodeId, Map<String, Object> requestData, String username) {
+        RepositoryNode node = nodeRepository.findById(nodeId)
+                .orElseThrow(() -> new RuntimeException("Node not found"));
+
+        try {
+            Path pagesDir = Paths.get(UPLOAD_DIR, "pages");
+            if (!Files.exists(pagesDir)) {
+                Files.createDirectories(pagesDir);
+            }
+
+            Path pageFile = pagesDir.resolve(nodeId.toString() + ".json");
+            int version = 1;
+
+            if (Files.exists(pageFile)) {
+                try {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> existing = objectMapper.readValue(pageFile.toFile(), Map.class);
+                    Object verObj = existing.get("version");
+                    if (verObj instanceof Number) {
+                        version = ((Number) verObj).intValue() + 1;
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            Map<String, Object> pageData = new HashMap<>(requestData);
+            pageData.put("nodeId", nodeId.toString());
+            if (!pageData.containsKey("title") || pageData.get("title") == null) {
+                pageData.put("title", node.getName());
+            } else {
+                // Update node name if page title was edited
+                String newTitle = pageData.get("title").toString();
+                if (!newTitle.isBlank() && !newTitle.equals(node.getName())) {
+                    node.setName(newTitle);
+                    nodeRepository.save(node);
+                }
+            }
+            pageData.put("version", version);
+            pageData.put("lastModifiedBy", username != null ? username : "System");
+            pageData.put("lastModifiedAt", java.time.Instant.now().toString());
+
+            // Save active page
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(pageFile.toFile(), pageData);
+
+            // Save version snapshot
+            Path versionsDir = pagesDir.resolve(nodeId.toString() + "_versions");
+            if (!Files.exists(versionsDir)) {
+                Files.createDirectories(versionsDir);
+            }
+            Path versionFile = versionsDir.resolve("v" + version + ".json");
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(versionFile.toFile(), pageData);
+
+            // Update versions index
+            Path indexFile = versionsDir.resolve("index.json");
+            List<Map<String, Object>> versionList = new ArrayList<>();
+            if (Files.exists(indexFile)) {
+                try {
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> existingList = objectMapper.readValue(indexFile.toFile(), List.class);
+                    versionList.addAll(existingList);
+                } catch (Exception ignored) {}
+            }
+
+            Map<String, Object> vMeta = new HashMap<>();
+            vMeta.put("version", version);
+            vMeta.put("savedAt", pageData.get("lastModifiedAt"));
+            vMeta.put("savedBy", pageData.get("lastModifiedBy"));
+            vMeta.put("title", pageData.get("title"));
+            versionList.add(0, vMeta); // Latest first
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(indexFile.toFile(), versionList);
+
+            pageData.put("isStarred", getUserStars(username).contains(nodeId.toString()));
+            return pageData;
+        } catch (IOException e) {
+            log.error("Failed to save page for node {}", nodeId, e);
+            throw new RuntimeException("Failed to save page: " + e.getMessage());
+        }
+    }
+
+    public List<Map<String, Object>> getPageVersions(UUID nodeId) {
+        Path indexFile = Paths.get(UPLOAD_DIR, "pages", nodeId.toString() + "_versions", "index.json");
+        if (Files.exists(indexFile)) {
+            try {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> list = objectMapper.readValue(indexFile.toFile(), List.class);
+                return list;
+            } catch (Exception e) {
+                log.error("Failed to read versions for node {}", nodeId, e);
+            }
+        }
+        return Collections.emptyList();
+    }
+
+    public Map<String, Object> restorePageVersion(UUID nodeId, int version, String username) {
+        Path versionFile = Paths.get(UPLOAD_DIR, "pages", nodeId.toString() + "_versions", "v" + version + ".json");
+        if (!Files.exists(versionFile)) {
+            throw new RuntimeException("Version v" + version + " not found");
+        }
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> snapshot = objectMapper.readValue(versionFile.toFile(), Map.class);
+            return savePage(nodeId, snapshot, username);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to restore version: " + e.getMessage());
+        }
+    }
+
+    // ==================== COMMENTS ====================
+
+    public List<Map<String, Object>> getPageComments(UUID nodeId) {
+        Path commentsFile = Paths.get(UPLOAD_DIR, "pages", nodeId.toString() + "_comments.json");
+        if (Files.exists(commentsFile)) {
+            try {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> comments = objectMapper.readValue(commentsFile.toFile(), List.class);
+                return comments;
+            } catch (Exception e) {
+                log.error("Failed to read comments for node {}", nodeId, e);
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    public Map<String, Object> addPageComment(UUID nodeId, String text, String username, String role) {
+        if (text == null || text.trim().isEmpty()) {
+            throw new IllegalArgumentException("Comment text cannot be empty");
+        }
+
+        List<Map<String, Object>> comments = getPageComments(nodeId);
+        Map<String, Object> newComment = new HashMap<>();
+        newComment.put("id", UUID.randomUUID().toString());
+        newComment.put("nodeId", nodeId.toString());
+        newComment.put("text", text.trim());
+        newComment.put("author", username != null ? username : "Anonymous");
+        newComment.put("authorRole", role != null ? role : "TESTER");
+        newComment.put("createdAt", java.time.Instant.now().toString());
+
+        comments.add(newComment);
+
+        try {
+            Path pagesDir = Paths.get(UPLOAD_DIR, "pages");
+            if (!Files.exists(pagesDir)) {
+                Files.createDirectories(pagesDir);
+            }
+            Path commentsFile = pagesDir.resolve(nodeId.toString() + "_comments.json");
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(commentsFile.toFile(), comments);
+        } catch (IOException e) {
+            log.error("Failed to save comments for node {}", nodeId, e);
+            throw new RuntimeException("Failed to save comment: " + e.getMessage());
+        }
+
+        return newComment;
+    }
+
+    // ==================== USER STARS ====================
+
+    public Set<String> getUserStars(String username) {
+        String safeUser = (username != null ? username : "default").replaceAll("[^a-zA-Z0-9_.-]", "_");
+        Path starFile = Paths.get(UPLOAD_DIR, "pages", "stars_" + safeUser + ".json");
+        if (Files.exists(starFile)) {
+            try {
+                @SuppressWarnings("unchecked")
+                List<String> list = objectMapper.readValue(starFile.toFile(), List.class);
+                return new HashSet<>(list);
+            } catch (Exception ignored) {}
+        }
+        return new HashSet<>();
+    }
+
+    public boolean toggleStar(UUID nodeId, String username) {
+        String safeUser = (username != null ? username : "default").replaceAll("[^a-zA-Z0-9_.-]", "_");
+        Set<String> stars = getUserStars(username);
+        String idStr = nodeId.toString();
+        boolean nowStarred;
+        if (stars.contains(idStr)) {
+            stars.remove(idStr);
+            nowStarred = false;
+        } else {
+            stars.add(idStr);
+            nowStarred = true;
+        }
+
+        try {
+            Path pagesDir = Paths.get(UPLOAD_DIR, "pages");
+            if (!Files.exists(pagesDir)) {
+                Files.createDirectories(pagesDir);
+            }
+            Path starFile = pagesDir.resolve("stars_" + safeUser + ".json");
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(starFile.toFile(), new ArrayList<>(stars));
+        } catch (IOException e) {
+            log.error("Failed to save stars for user {}", username, e);
+        }
+
+        return nowStarred;
+    }
 }

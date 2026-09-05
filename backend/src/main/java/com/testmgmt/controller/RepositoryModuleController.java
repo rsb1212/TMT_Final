@@ -163,6 +163,72 @@ public class RepositoryModuleController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
+    // ==================== CONFLUENCE LIVING PAGE ENDPOINTS ====================
+
+    @GetMapping("/nodes/{nodeId}/page")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPage(
+            @PathVariable UUID nodeId,
+            org.springframework.security.core.Authentication auth) {
+        String username = auth != null ? auth.getName() : "Anonymous";
+        return ResponseEntity.ok(ApiResponse.success(repositoryModuleService.getPage(nodeId, username)));
+    }
+
+    @PutMapping("/nodes/{nodeId}/page")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> savePage(
+            @PathVariable UUID nodeId,
+            @RequestBody Map<String, Object> pageData,
+            org.springframework.security.core.Authentication auth) {
+        String username = auth != null ? auth.getName() : "Anonymous";
+        return ResponseEntity.ok(ApiResponse.success(repositoryModuleService.savePage(nodeId, pageData, username)));
+    }
+
+    @GetMapping("/nodes/{nodeId}/versions")
+    public ResponseEntity<ApiResponse<?>> getVersions(@PathVariable UUID nodeId) {
+        return ResponseEntity.ok(ApiResponse.success(repositoryModuleService.getPageVersions(nodeId)));
+    }
+
+    @PostMapping("/nodes/{nodeId}/restore-version")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> restoreVersion(
+            @PathVariable UUID nodeId,
+            @RequestParam int version,
+            org.springframework.security.core.Authentication auth) {
+        String username = auth != null ? auth.getName() : "Anonymous";
+        return ResponseEntity.ok(ApiResponse.success(repositoryModuleService.restorePageVersion(nodeId, version, username)));
+    }
+
+    @GetMapping("/nodes/{nodeId}/comments")
+    public ResponseEntity<ApiResponse<?>> getComments(@PathVariable UUID nodeId) {
+        return ResponseEntity.ok(ApiResponse.success(repositoryModuleService.getPageComments(nodeId)));
+    }
+
+    @PostMapping("/nodes/{nodeId}/comments")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> addComment(
+            @PathVariable UUID nodeId,
+            @RequestBody Map<String, String> body,
+            org.springframework.security.core.Authentication auth) {
+        String username = auth != null ? auth.getName() : "Anonymous";
+        String role = auth != null && !auth.getAuthorities().isEmpty()
+                ? auth.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "")
+                : "TESTER";
+        String text = body.get("text");
+        return ResponseEntity.ok(ApiResponse.success(repositoryModuleService.addPageComment(nodeId, text, username, role)));
+    }
+
+    @PostMapping("/nodes/{nodeId}/star")
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> toggleStar(
+            @PathVariable UUID nodeId,
+            org.springframework.security.core.Authentication auth) {
+        String username = auth != null ? auth.getName() : "Anonymous";
+        boolean starred = repositoryModuleService.toggleStar(nodeId, username);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("starred", starred)));
+    }
+
+    @GetMapping("/stars")
+    public ResponseEntity<ApiResponse<?>> getStars(org.springframework.security.core.Authentication auth) {
+        String username = auth != null ? auth.getName() : "Anonymous";
+        return ResponseEntity.ok(ApiResponse.success(repositoryModuleService.getUserStars(username)));
+    }
+
     // ==================== SEED ENDPOINT (Admin only) ====================
 
     @PostMapping("/seed")
