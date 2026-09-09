@@ -41,6 +41,7 @@ com\testmgmt\dto\RepositoryModuleDTOs$NodeResponse.class
 com\testmgmt\dto\response\TesterProductivityDTOs$DailyProductivityEntry$DailyProductivityEntryBuilder.class
 com\testmgmt\security\JwtUtil.class
 com\testmgmt\dto\response\TesterProductivityDTOs$TesterDailyRecord$TesterDailyRecordBuilder.class
+com\testmgmt\security\IdemSsoService$LoginResult.class
 com\testmgmt\dto\request\WorkflowDTOs$RedevelopmentRequest.class
 com\testmgmt\dto\RepositoryModuleDTOs$NodeResponse$NodeResponseBuilder.class
 com\testmgmt\dto\response\ResponseDTOs$QACallResponse$QACallResponseBuilder.class
@@ -177,6 +178,7 @@ com\testmgmt\dto\request\WorkflowDTOs.class
 com\testmgmt\dto\response\ResponseDTOs$CallNumberResponse$CallNumberResponseBuilder.class
 com\testmgmt\repository\ModuleRepository.class
 com\testmgmt\entity\TestCaseAssignment$TestCaseAssignmentBuilder.class
+com\testmgmt\security\IdemSsoService.class
 com\testmgmt\dto\request\WorkflowDTOs$ReassignRequest.class
 com\testmgmt\dto\RepositoryModuleDTOs$CreateNodeRequest.class
 com\testmgmt\repository\QACallRepository.class
@@ -268,6 +270,7 @@ com\testmgmt\repository\AttachmentRepository.class
 com\testmgmt\dto\PdCrCallDTOs$AgeingRow.class
 com\testmgmt\dto\response\ResponseDTOs$AttachmentResponse$AttachmentResponseBuilder.class
 com\testmgmt\dto\response\TesterProductivityDTOs$ModuleProductivity.class
+com\testmgmt\controller\IdemAuthController.class
 com\testmgmt\controller\RepositoryController.class
 com\testmgmt\dto\response\ResponseDTOs$SMEDepartmentSummary.class
 com\testmgmt\service\RepositoryModuleService.class
@@ -377,6 +380,7 @@ com\testmgmt\entity\SmeModuleAssignment$SmeModuleAssignmentBuilder.class
 com\testmgmt\dto\response\ResponseDTOs$ProjectResponse.class
 com\testmgmt\dto\response\ResponseDTOs$TestCaseResponse.class
 com\testmgmt\exception\BadRequestException.class
+com\testmgmt\security\IdemSsoService$AuthorizationRequest.class
 com\testmgmt\entity\TestCaseRelease$TestCaseReleaseBuilder.class
 com\testmgmt\controller\TestCaseVersionController.class
 com\testmgmt\repository\DefectRepository.class

@@ -1,7 +1,7 @@
 package com.testmgmt.config;
 
-import com.testmgmt.security.JwtAuthFilter;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,7 +23,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import com.testmgmt.security.JwtAuthFilter;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration @EnableWebSecurity @EnableMethodSecurity @RequiredArgsConstructor
 public class SecurityConfig {
@@ -50,7 +52,9 @@ public class SecurityConfig {
                     .maxAgeInSeconds(31536000))
             )
             .authorizeHttpRequests(auth -> auth
-                // Public
+                // Public — includes IDEM / RH-SSO endpoints (/api/v1/auth/idem/login + /callback).
+                // Local username/password login is disabled (see AuthController); the JWT below
+                // is only the app SESSION token minted after a successful RH-SSO OIDC login.
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/jira/webhook").permitAll()  // JIRA webhook — no JWT
                 .requestMatchers("/api/v1/jira/**").hasAnyRole("MANAGER","ADMIN","TESTER","SME","VIEWER")

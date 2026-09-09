@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
@@ -7,7 +7,7 @@ import './LoginPage.css'
 import BatLogo from '../data/bajaj.png';
 
 export default function LoginPage() {
-  const { login }              = useAuth();
+  const { login, ssoLogin } = useAuth();
   const { isDark, toggle }     = useTheme();
   const navigate               = useNavigate();
   const [form,    setForm]     = useState({ email: '', password: '' });
@@ -15,6 +15,44 @@ export default function LoginPage() {
   const [error,   setError]    = useState('');
   const [loading, setLoading]  = useState(false);
   const [idemLoading, setIdemLoading] = useState(false);
+
+  // ── Handle IDEM / RH-SSO redirect callback ──────────────────────────────────
+  // After a successful SSO login the backend redirects here with
+  // ?sso=success&token=<jwt>&user=<base64-json>. Parse it, persist the session
+  // and continue into the app. On ?sso=error show a friendly message.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sso = params.get('sso');
+    if (!sso) return;
+
+    if (sso === 'success') {
+      try {
+        const token = params.get('token');
+        const userB64 = params.get('user');
+        // base64url → JSON
+        const json = decodeURIComponent(
+          atob(userB64.replace(/-/g, '+').replace(/_/g, '/'))
+            .split('')
+            .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+        );
+        const userData = JSON.parse(json);
+        ssoLogin(token, userData);
+        // Clean the URL then enter the app.
+        window.history.replaceState({}, document.title, '/login');
+        navigate('/');
+      } catch (err) {
+        console.error('SSO callback parse failed', err);
+        setError('Single sign-on failed. Please try again.');
+        window.history.replaceState({}, document.title, '/login');
+      }
+    } else if (sso === 'error') {
+      const reason = params.get('reason') || 'unknown';
+      setError(`Single sign-on failed (${reason}). Please try again.`);
+      window.history.replaceState({}, document.title, '/login');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const doLogin = async (email, password) => {
     setError('');
@@ -31,11 +69,16 @@ export default function LoginPage() {
 
   const handleSubmit = (e) => { e.preventDefault(); doLogin(form.email, form.password); };
 
+  // IDEM sign-in — ALWAYS redirect the browser to the IDEM / RH-SSO login page.
+  // The backend endpoint (GET /api/v1/auth/idem/login) starts the OIDC flow and
+  // redirects to Keycloak; after authentication it returns to /login with a
+  // ?sso=success&token=...&user=... payload (handled by the useEffect above).
   const handleIdemLogin = () => {
     setIdemLoading(true);
     setError('');
-    // Redirect to IDEM SSO endpoint
-    window.location.href = '/api/v1/auth/idem/login';
+    const base = import.meta.env.VITE_API_URL || '/api/v1';
+    // Full-page navigation (NOT axios) so the browser follows the 302 to Keycloak.
+    window.location.href = `${base}/auth/idem/login`;
   };
 
   return (

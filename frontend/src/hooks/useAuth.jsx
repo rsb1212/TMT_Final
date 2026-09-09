@@ -68,8 +68,61 @@ export function AuthProvider({ children }) {
     return userData;
   };
 
-  const switchTenant = async (tenantId) => {
-    try {
+  /**
+   * Complete an IDEM / RH-SSO login. Called on the /login page when the backend
+   * redirects back with ?sso=success&token=...&user=<base64-json>.
+   */
+  const ssoLogin = (token, userData) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    if (userData.tenantId) {
+      localStorage.setItem('tenantId', userData.tenantId);
+    }
+    setUser(userData);
+    if (userData.role === 'ADMIN') {
+      loadTenants();
+    }
+    return userData;
+  };
+
+  /**
+   * IDEM credential login — validates the User ID (domain email) + password
+   * against the database via POST /auth/idem/authenticate and persists the
+   * role-aware session. Returns the authenticated user (with `role`) so the
+   * caller can route accordingly.
+   */
+  const idemLogin = async (userId, password) => {
+    const safeUserId = typeof userId === 'object'
+      ? (userId?.email ?? '')
+      : String(userId ?? '');
+    const safePassword = typeof password === 'object'
+      ? (password?.password ?? '')
+      : String(password ?? '');
+
+    const { data } = await authApi.idemLogin({ email: safeUserId, password: safePassword });
+    const { token, user: userData, tenant: tenantData } = data.data;
+
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+
+    if (tenantData) {
+      localStorage.setItem('tenant', JSON.stringify(tenantData));
+      localStorage.setItem('tenantId', tenantData.id);
+      setTenant(tenantData);
+    } else if (userData.tenantId) {
+      localStorage.setItem('tenantId', userData.tenantId);
+    }
+
+    setUser(userData);
+
+    if (userData.role === 'ADMIN') {
+      loadTenants();
+    }
+
+    return userData;
+  };
+
+  const switchTenant = async (tenantId) => {    try {
       const { data } = await tenantApi.get(tenantId);
       if (data.success) {
         const tenantData = data.data;
@@ -104,6 +157,8 @@ export function AuthProvider({ children }) {
       logout, 
       switchTenant, 
       loadTenants,
+      ssoLogin,
+      idemLogin,
       loading 
     }}>
       {children}

@@ -1,5 +1,13 @@
 package com.testmgmt.service;
 
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.testmgmt.dto.request.AuthDTOs.CreateUserRequest;
 import com.testmgmt.dto.request.AuthDTOs.ResetPasswordRequest;
 import com.testmgmt.dto.request.AuthDTOs.UpdateUserRequest;
@@ -10,15 +18,9 @@ import com.testmgmt.exception.BadRequestException;
 import com.testmgmt.exception.ConflictException;
 import com.testmgmt.exception.ResourceNotFoundException;
 import com.testmgmt.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 @SuppressWarnings("null")
 @Service
@@ -53,12 +55,10 @@ public class UserManagementService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ConflictException("Email already in use: " + request.getEmail());
         }
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new ConflictException("Username already taken: " + request.getUsername());
-        }
 
+        // User ID (username) is always the corporate domain email.
         User user = User.builder()
-                .username(request.getUsername())
+                .username(request.getEmail())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())

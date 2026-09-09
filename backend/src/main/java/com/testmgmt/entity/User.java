@@ -24,7 +24,8 @@ public class User extends BaseEntity {
     @Column(name = "team_id")
     private UUID teamId;
 
-    @Column(name = "username", nullable = false, length = 50)
+    /** The user's "User ID" — always kept equal to {@link #email} (the corporate domain id). */
+    @Column(name = "username", nullable = false, length = 120)
     private String username;
 
     @Column(name = "email", nullable = false, length = 120)

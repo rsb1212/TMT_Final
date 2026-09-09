@@ -1,16 +1,23 @@
 package com.testmgmt.controller;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.testmgmt.dto.request.AuthDTOs.*;
+import com.testmgmt.dto.request.AuthDTOs.ChangePasswordRequest;
 import com.testmgmt.dto.response.ResponseDTOs.*;
+import com.testmgmt.dto.response.ResponseDTOs.ApiResponse;
 import com.testmgmt.service.AuthService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -20,6 +27,13 @@ public class AuthController {
 
     private final AuthService authService;
 
+    /*
+     * ─── LOCAL JWT USERNAME/PASSWORD LOGIN — DISABLED ──────────────────────────
+     * Authentication has been migrated to IDEM / RH-SSO (Keycloak) OIDC.
+     * Users now sign in via GET /api/v1/auth/idem/login (see IdemAuthController).
+     * The endpoints below are intentionally commented out so that no local
+     * password-based JWT can be issued. Kept in source for easy rollback.
+     *
     @PostMapping("/login")
     @Operation(summary = "Login and receive JWT token")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
@@ -31,6 +45,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(ApiResponse.success("User registered successfully", authService.register(request)));
     }
+    */
 
     @PostMapping("/change-password")
     @Operation(summary = "Change own password")

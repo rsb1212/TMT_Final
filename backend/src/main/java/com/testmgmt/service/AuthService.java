@@ -1,7 +1,21 @@
 package com.testmgmt.service;
 
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.testmgmt.dto.request.AuthDTOs.*;
+import com.testmgmt.dto.request.AuthDTOs.ChangePasswordRequest;
+import com.testmgmt.dto.request.AuthDTOs.LoginRequest;
+import com.testmgmt.dto.request.AuthDTOs.RegisterRequest;
 import com.testmgmt.dto.response.ResponseDTOs.*;
+import com.testmgmt.dto.response.ResponseDTOs.AuthResponse;
+import com.testmgmt.dto.response.ResponseDTOs.TenantResponse;
+import com.testmgmt.dto.response.ResponseDTOs.UserResponse;
 import com.testmgmt.entity.Tenant;
 import com.testmgmt.entity.User;
 import com.testmgmt.enums.UserRole;
@@ -11,14 +25,8 @@ import com.testmgmt.exception.ResourceNotFoundException;
 import com.testmgmt.repository.TenantRepository;
 import com.testmgmt.repository.UserRepository;
 import com.testmgmt.security.JwtUtil;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @SuppressWarnings("null")
 @Service
@@ -77,12 +85,10 @@ public class AuthService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ConflictException("Email already in use: " + request.getEmail());
         }
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new ConflictException("Username already taken: " + request.getUsername());
-        }
 
+        // User ID (username) is always the corporate domain email.
         User user = User.builder()
-                .username(request.getUsername())
+                .username(request.getEmail())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
