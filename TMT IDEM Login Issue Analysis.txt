@@ -1,0 +1,224 @@
+# TMT IDEM Login Issue Analysis
+
+## Current Issue
+
+After successful IDEM login, the application redirects back to the login page instead of navigating to the dashboard.
+
+---
+
+## Browser Errors
+
+```text
+Access to XMLHttpRequest at
+'https://secure-sso-rhsso-np.apps.ocplife-np.bajajlife.com/auth/realms/internal/protocol/openid-connect/token'
+from origin 'http://10.3.41.102'
+has been blocked by CORS policy:
+No 'Access-Control-Allow-Origin' header is present on the requested resource.
+```
+
+```text
+Keycloak init failed: undefined
+```
+
+```text
+POST /protocol/openid-connect/token
+net::ERR_FAILED 200 (OK)
+```
+
+---
+
+## Frontend Debug Logs
+
+```text
+AUTHENTICATED = false
+KEYCLOAK AUTH = false
+KEYCLOAK TOKEN = undefined
+NOT AUTHENTICATED
+```
+
+---
+
+## Impact
+
+Because Keycloak authentication is not established:
+
+```text
+authenticated = false
+```
+
+The following code never executes:
+
+```javascript
+await exchangeKeycloakToken();
+```
+
+As a result:
+
+```text
+POST /api/v1/auth/keycloak-login
+```
+
+is never called.
+
+Backend logs confirm:
+
+```text
+KEYCLOAK LOGIN API CALLED
+```
+
+Not Found
+
+```text
+========== IDEM LOGIN START ==========
+```
+
+Not Found
+
+---
+
+## Current Authentication Flow
+
+```text
+IDEM Login
+    ✅
+    ↓
+Keycloak Authentication
+    ✅
+    ↓
+Token Endpoint
+    ✅ 200 OK
+    ↓
+Browser Reads Token Response
+    ❌ Blocked by CORS
+    ↓
+keycloak.init()
+    ❌ Failed
+    ↓
+authenticated = true
+    ❌ False
+    ↓
+exchangeKeycloakToken()
+    ❌ Not Executed
+    ↓
+/api/v1/auth/keycloak-login
+    ❌ Not Called
+    ↓
+TMT JWT Token Generation
+    ❌ Not Generated
+    ↓
+Dashboard Redirect
+    ❌ User Returned to Login Page
+```
+
+---
+
+## Verification Performed
+
+### Frontend
+
+```text
+Frontend build deployed successfully
+Latest JS bundle loaded
+Assets loading correctly
+```
+
+### Nginx
+
+```text
+HTTP/1.1 200 OK
+```
+
+for:
+
+```text
+http://10.3.41.102/
+```
+
+and
+
+```text
+http://10.3.41.102/assets/index-XBJV6x2E.js
+```
+
+### Backend
+
+```text
+IDEM Callback working
+Authorization code received successfully
+```
+
+### Keycloak
+
+```text
+Token endpoint returns 200 OK
+```
+
+but browser cannot read the response.
+
+---
+
+## Suspected Root Cause
+
+Keycloak/RHSSO client CORS configuration issue.
+
+Response headers from token endpoint are missing:
+
+```http
+Access-Control-Allow-Origin
+```
+
+which prevents the browser from reading the token response.
+
+---
+
+## Keycloak Client Configuration To Verify
+
+### Valid Redirect URIs
+
+```text
+http://10.3.41.102/*
+```
+
+### Web Origins
+
+```text
+http://10.3.41.102
+```
+
+or
+
+```text
+*
+```
+
+(for testing only)
+
+### Client Settings
+
+```text
+Public Client = ON
+Standard Flow Enabled = ON
+PKCE (S256) Enabled
+```
+
+---
+
+## Current Status
+
+| Component | Status |
+|------------|---------|
+| Frontend Deployment | ✅ Fixed |
+| Nginx Configuration | ✅ Working |
+| Backend Service | ✅ Working |
+| IDEM Callback | ✅ Working |
+| Keycloak Authentication | ✅ Working |
+| Token Endpoint | ✅ 200 OK |
+| Browser Token Access | ❌ Blocked |
+| Keycloak Session | ❌ Not Created |
+| `/api/v1/auth/keycloak-login` | ❌ Not Called |
+| TMT JWT Generation | ❌ Not Generated |
+| Dashboard Redirect | ❌ Failing |
+
+## Current Blocker
+
+Browser cannot read the Keycloak token response due to CORS restrictions, causing authentication state to remain false and preventing dashboard login.
